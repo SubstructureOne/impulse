@@ -39,29 +39,3 @@ pub struct Report {
     pub packet_bytes: Option<Vec<u8>>,
     pub charged: bool,
 }
-
-// impl Queryable<reports::SqlType, diesel::pg::Pg> for Report {
-//     // type Row = (i64, Option<String>, PostgresqlPacketType,); // Timestamp, Nullable<Pktdirection>, Nullable<Jsonb>, Nullable<Binary>, Bool);
-//     type Row = (PostgresqlPacketType,); // Timestamp, Nullable<Pktdirection>, Nullable<Jsonb>, Nullable<Binary>, Bool);
-//
-//     fn build(row: Self::Row) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
-//         // let smth = row.7;
-//         // smth.
-//         Ok(Report {
-//             // id: row.0.into(),
-//             // username: row.1.into(),
-//             packet_type: row.0.into(),
-//             // packet_time: row.3.into(),
-//             // direction: row.4.into(),
-//             // packet_info: row.5.into(),
-//             // packet_bytes: row.6.into(),
-//             // charged: row.7.from_sql(),
-//         })
-//     }
-// }
-//
-// impl FromStaticSqlRow<reports::SqlType, diesel::pg::Pg> for (PostgresqlPacketType,) {
-//     fn build_from_row<'a>(row: &impl Row<'a, Pg>) -> diesel::deserialize::Result<Self> {
-//         todo!()
-//     }
-// }
