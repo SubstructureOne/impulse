@@ -11,8 +11,6 @@ use crate::schema::sql_types::{Pgpkttype, Pktdirection};
 use crate::schema::reports;
 
 
-// #[derive(Debug, ToSql, FromSql)]
-// #[postgres(name="pgpkttype")]
 #[derive(diesel_derive_enum::DbEnum, Debug)]
 #[DieselTypePath = "crate::schema::sql_types::Pgpkttype"]
 pub enum PostgresqlPacketType {
