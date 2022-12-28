@@ -1,14 +1,5 @@
 use diesel::prelude::Queryable;
-use chrono::NaiveDateTime;
-use diesel::backend::Backend;
-use diesel::deserialize::FromStaticSqlRow;
-use diesel::pg::Pg;
-use diesel::row::Row;
-use diesel::sql_types::{BigInt, Binary, Bool, Bytea, Int8, Jsonb, Text, Timestamp};
-use postgres_types::{FromSql, ToSql};
-
-use crate::schema::sql_types::{Pgpkttype, Pktdirection};
-use crate::schema::reports;
+use chrono::{DateTime, NaiveDateTime, Utc};
 
 
 #[derive(diesel_derive_enum::DbEnum, Debug)]
@@ -26,6 +17,20 @@ pub enum PacketDirection {
     Backward
 }
 
+#[derive(diesel_derive_enum::DbEnum, Debug)]
+#[DieselTypePath = "crate::schema::sql_types::Chargetype"]
+pub enum ChargeType {
+    DataTransferInBytes,
+    DataTransferOutBytes,
+    DataStorageByteHours,
+}
+
+#[derive(diesel_derive_enum::DbEnum, Debug)]
+#[DieselTypePath = "crate::schema::sql_types::Timechargetype"]
+pub enum TimeChargeType {
+    DataStorageBytes,
+}
+
 #[derive(Queryable, Debug)]
 pub struct Report {
     pub id: i64,
@@ -36,4 +41,40 @@ pub struct Report {
     pub packet_info: Option<serde_json::Value>,
     pub packet_bytes: Option<Vec<u8>>,
     pub charged: bool,
+}
+
+#[derive(Queryable, Debug)]
+pub struct Charge {
+    pub charge_id: i64,
+    pub charge_time: DateTime<Utc>,
+    pub user_id: uuid::Uuid,
+    pub charge_type: ChargeType,
+    pub quantity: f64,
+    pub rate: f64,
+    pub amount: f64,
+}
+
+#[derive(Queryable, Debug)]
+pub struct TimeCharge {
+    pub timecharge_id: i64,
+    pub timecharge_time: DateTime<Utc>,
+    pub user_id: uuid::Uuid,
+    pub timecharge_type: TimeChargeType,
+    pub amount: f64,
+}
+
+#[derive(Queryable, Debug)]
+pub struct Balance {
+    pub user_id: uuid::Uuid,
+    pub balance: f64,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Queryable, Debug)]
+pub struct ExtTransacations {
+    pub exttransaction_id: i64,
+    pub user_id: uuid::Uuid,
+    pub amount: f64,
+    pub exttransaction_time: DateTime<Utc>,
 }
