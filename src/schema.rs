@@ -81,10 +81,22 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    transactions (txn_id) {
+        txn_id -> Int8,
+        txn_time -> Timestamptz,
+        from_user -> Uuid,
+        to_user -> Uuid,
+        charge_ids -> Nullable<Array<Nullable<Int8>>>,
+        amount -> Float8,
+    }
+}
+
 diesel::allow_tables_to_appear_in_same_query!(
     balances,
     charges,
     exttransactions,
     reports,
     timecharges,
+    transactions,
 );

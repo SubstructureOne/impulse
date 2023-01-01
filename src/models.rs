@@ -72,7 +72,7 @@ pub struct Balance {
 }
 
 #[derive(Queryable, Debug)]
-pub struct ExtTransacations {
+pub struct ExtTransactions {
     pub exttransaction_id: i64,
     pub user_id: uuid::Uuid,
     pub amount: f64,
