@@ -1,9 +1,15 @@
-use diesel::prelude::Queryable;
+use anyhow::Result;
 use chrono::{DateTime, NaiveDateTime, Utc};
+use diesel::prelude::*;
+use diesel::debug_query;
+use log::info;
+
+use crate::schema::reports;
 
 
 #[derive(diesel_derive_enum::DbEnum, Debug)]
 #[DieselTypePath = "crate::schema::sql_types::Pgpkttype"]
+#[DbValueStyle = "verbatim"]
 pub enum PostgresqlPacketType {
     Startup,
     Query,
@@ -12,6 +18,7 @@ pub enum PostgresqlPacketType {
 
 #[derive(diesel_derive_enum::DbEnum, Debug)]
 #[DieselTypePath = "crate::schema::sql_types::Pktdirection"]
+#[DbValueStyle = "verbatim"]
 pub enum PacketDirection {
     Forward,
     Backward
@@ -19,6 +26,7 @@ pub enum PacketDirection {
 
 #[derive(diesel_derive_enum::DbEnum, Debug)]
 #[DieselTypePath = "crate::schema::sql_types::Chargetype"]
+#[DbValueStyle = "verbatim"]
 pub enum ChargeType {
     DataTransferInBytes,
     DataTransferOutBytes,
@@ -27,13 +35,14 @@ pub enum ChargeType {
 
 #[derive(diesel_derive_enum::DbEnum, Debug)]
 #[DieselTypePath = "crate::schema::sql_types::Timechargetype"]
+#[DbValueStyle = "verbatim"]
 pub enum TimeChargeType {
     DataStorageBytes,
 }
 
 #[derive(Queryable, Debug)]
 pub struct Report {
-    pub id: i64,
+    pub report_id: i64,
     pub username: Option<String>,
     pub packet_type: PostgresqlPacketType,
     pub packet_time: NaiveDateTime,
@@ -41,6 +50,60 @@ pub struct Report {
     pub packet_info: Option<serde_json::Value>,
     pub packet_bytes: Option<Vec<u8>>,
     pub charged: bool,
+}
+
+impl Report {
+    pub fn for_user<S: Into<String>>(conn: &mut PgConnection, username_: S) -> Result<Vec<Report>>{
+        use crate::schema::reports::dsl::*;
+        Ok(reports
+            .filter(username.eq(&username_.into()))
+            .load::<Report>(conn)?)
+    }
+
+    pub fn uncharged<S: Into<String>>(conn: &mut PgConnection, username_: S) -> Result<Vec<Report>> {
+        use crate::schema::reports::dsl::*;
+        Ok(reports
+            .filter(username.eq(&username_.into()))
+            .filter(charged.eq(false))
+            .load::<Report>(conn)?
+        )
+    }
+
+
+}
+
+#[derive(Insertable, Debug)]
+#[diesel(table_name = reports)]
+pub struct NewReport {
+    pub username: Option<String>,
+    pub packet_type: PostgresqlPacketType,
+    pub direction: Option<PacketDirection>,
+    pub packet_info: Option<serde_json::Value>,
+    pub packet_bytes: Option<Vec<u8>>,
+    pub charged: bool,
+}
+
+pub fn create_report(
+    conn: &mut PgConnection,
+    username: Option<String>,
+    packet_type: PostgresqlPacketType,
+    direction: Option<PacketDirection>,
+    packet_info: Option<serde_json::Value>,
+    packet_bytes: Option<Vec<u8>>,
+    charged: bool
+) -> Result<Report> {
+    let new_report = NewReport {
+        username,
+        packet_type,
+        direction,
+        packet_info,
+        packet_bytes,
+        charged
+    };
+    let query = diesel::insert_into(reports::table)
+        .values(&new_report);
+    info!("Creating report: {}", debug_query::<diesel::pg::Pg, _>(&query));
+    Ok(query.get_result::<Report>(conn)?)
 }
 
 #[derive(Queryable, Debug)]
@@ -77,4 +140,14 @@ pub struct ExtTransactions {
     pub user_id: uuid::Uuid,
     pub amount: f64,
     pub exttransaction_time: DateTime<Utc>,
+}
+
+#[derive(Queryable, Debug)]
+pub struct Transaction {
+    pub transaction_id: i64,
+    pub txn_time: DateTime<Utc>,
+    pub from_user: uuid::Uuid,
+    pub to_user: uuid::Uuid,
+    pub charge_ids: Option<Vec<i64>>,
+    pub amount: f64,
 }
