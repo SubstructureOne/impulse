@@ -8,6 +8,7 @@ use lazy_static::lazy_static;
 use std::env;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
+pub const DB_PREFIX: &str = "ImpulseTestingDb_";
 
 lazy_static! {
     static ref BASE_URL: String = {
@@ -27,8 +28,9 @@ impl TestContext {
         let postgres_url = format!("{}/postgres", BASE_URL.as_str());
         let mut conn = PgConnection::establish(&postgres_url)?;
 
+        let db_name = DB_PREFIX.to_string() + db_name;
         info!("Creating database {}", db_name);
-        let query = diesel::sql_query(format!("CREATE DATABASE {}", db_name));
+        let query = diesel::sql_query(format!(r#"CREATE DATABASE "{}""#, &db_name));
         query.execute(&mut conn)?;
 
         info!("Running migrations on {}", db_name);
@@ -54,14 +56,20 @@ impl TestContext {
         info!("{} users disconnected", count);
 
         info!("Dropping database {}", &self.db_name);
-        let query = diesel::sql_query(format!("DROP DATABASE {}", self.db_name));
+        let query = diesel::sql_query(
+            format!(r#"DROP DATABASE "{}""#, &self.db_name)
+        );
         query.execute(&mut conn)?;
 
         Ok(())
     }
 
     pub fn connect(&self) -> Result<PgConnection> {
-        Ok(PgConnection::establish(&format!("{}/{}", &self.base_url, &self.db_name))?)
+        Ok(PgConnection::establish(&self.create_uri())?)
+    }
+
+    fn create_uri(&self) -> String {
+        format!("{}/{}", &self.base_url, &self.db_name)
     }
 }
 
@@ -71,8 +79,14 @@ impl Drop for TestContext {
         match self.drop_database() {
             Ok(()) => {}
             Err(err) => {
-                error!("Couldn't drop testing database: {}.", err);
+                panic!("Couldn't drop testing database: {}.", err);
             }
         }
+    }
+}
+
+impl std::fmt::Display for TestContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.create_uri())
     }
 }

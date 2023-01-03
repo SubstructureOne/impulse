@@ -60,7 +60,7 @@ diesel::table! {
         packet_id -> Int8,
         username -> Nullable<Text>,
         packet_type -> Pgpkttype,
-        packet_time -> Timestamp,
+        packet_time -> Timestamptz,
         direction -> Nullable<Pktdirection>,
         packet_info -> Nullable<Jsonb>,
         packet_bytes -> Nullable<Bytea>,
