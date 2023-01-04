@@ -39,6 +39,8 @@ diesel::table! {
         quantity -> Float8,
         rate -> Float8,
         amount -> Float8,
+        report_ids -> Nullable<Array<Nullable<Int8>>>,
+        transacted -> Bool,
     }
 }
 

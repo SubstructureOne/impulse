@@ -15,7 +15,9 @@ CREATE TABLE charges (
     charge_type chargetype NOT NULL,
     quantity double precision NOT NULL,
     rate double precision NOT NULL,
-    amount double precision NOT NULL GENERATED ALWAYS AS (quantity * rate) STORED
+    amount double precision NOT NULL GENERATED ALWAYS AS (quantity * rate) STORED,
+    report_ids bigint[] CHECK (array_position(report_ids, NULL) IS NULL),
+    transacted bool NOT NULL DEFAULT FALSE
 );
 CREATE INDEX charges_user_index on charges(user_id, charge_time ASC);
 
