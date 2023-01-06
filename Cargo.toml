@@ -3,7 +3,6 @@ name = "impulse"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = "1.0.68"
@@ -23,6 +22,7 @@ uuid = "1.2.2"
 [lib]
 name = "impulse"
 path = "src/lib.rs"
+
 
 [[bin]]
 name = "show_reports"

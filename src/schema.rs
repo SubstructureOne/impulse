@@ -16,6 +16,10 @@ pub mod sql_types {
     #[derive(diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "timechargetype"))]
     pub struct Timechargetype;
+
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "userstatus"))]
+    pub struct Userstatus;
 }
 
 diesel::table! {
@@ -94,6 +98,21 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::Userstatus;
+
+    users (user_id) {
+        user_id -> Uuid,
+        pg_name -> Text,
+        user_status -> Userstatus,
+        balance -> Float8,
+        status_synced -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
 diesel::allow_tables_to_appear_in_same_query!(
     balances,
     charges,
@@ -101,4 +120,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     reports,
     timecharges,
     transactions,
+    users,
 );
