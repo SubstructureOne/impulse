@@ -5,7 +5,8 @@ use diesel::debug_query;
 use diesel::pg::Pg;
 use log::{info, trace};
 
-use crate::schema::*;
+use crate::schema::{transactions, exttransactions};
+
 
 #[derive(Queryable, Debug)]
 pub struct ExtTransactions {

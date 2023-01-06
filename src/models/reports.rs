@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use log::{trace};
 use diesel::pg::Pg;
 
-use crate::schema::*;
+use crate::schema::reports;
 
 
 #[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Copy, Clone)]

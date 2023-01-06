@@ -3,9 +3,9 @@ use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use diesel::debug_query;
 use diesel::pg::Pg;
-use log::{info, trace};
+use log::{trace};
 
-use crate::schema::*;
+use crate::schema::charges;
 
 
 #[derive(diesel_derive_enum::DbEnum, Debug)]
