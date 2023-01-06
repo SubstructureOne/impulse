@@ -9,7 +9,7 @@ use crate::schema::*;
 
 pub mod reports;
 pub mod charges;
-
+pub mod transactions;
 
 
 #[derive(Queryable, Debug)]
@@ -20,20 +20,3 @@ pub struct Balance {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Queryable, Debug)]
-pub struct ExtTransactions {
-    pub exttransaction_id: i64,
-    pub user_id: uuid::Uuid,
-    pub amount: f64,
-    pub exttransaction_time: DateTime<Utc>,
-}
-
-#[derive(Queryable, Debug)]
-pub struct Transaction {
-    pub transaction_id: i64,
-    pub txn_time: DateTime<Utc>,
-    pub from_user: uuid::Uuid,
-    pub to_user: uuid::Uuid,
-    pub charge_ids: Option<Vec<i64>>,
-    pub amount: f64,
-}
