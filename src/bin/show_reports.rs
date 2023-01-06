@@ -1,4 +1,4 @@
-use self::models::Report;
+use self::models::reports::Report;
 use impulse::establish_connection;
 use diesel::prelude::*;
 

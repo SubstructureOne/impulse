@@ -1,7 +1,7 @@
 use anyhow::{Result};
 use log::info;
 
-use impulse::models::*;
+use impulse::models::reports::*;
 
 mod common;
 
