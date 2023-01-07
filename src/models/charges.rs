@@ -4,11 +4,12 @@ use diesel::prelude::*;
 use diesel::debug_query;
 use diesel::pg::Pg;
 use log::{trace};
+use uuid::Uuid;
 
 use crate::schema::charges;
 
 
-#[derive(diesel_derive_enum::DbEnum, Debug)]
+#[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Eq)]
 #[DieselTypePath = "crate::schema::sql_types::Chargetype"]
 #[DbValueStyle = "verbatim"]
 pub enum ChargeType {
@@ -25,7 +26,6 @@ pub enum TimeChargeType {
 }
 
 
-
 // diesel translates "report_ids bigint[]" as "Nullable<Array<Nullable<Int8>>>"
 // since arrays in Postgres can contain NULL values. We prevent that by adding
 // a constraint, but Diesel is not aware of it. Therefore we translate directly
@@ -35,7 +35,7 @@ pub enum TimeChargeType {
 struct Charge_ {
     pub charge_id: i64,
     pub charge_time: DateTime<Utc>,
-    pub user_id: uuid::Uuid,
+    pub user_id: Uuid,
     pub charge_type: ChargeType,
     pub quantity: f64,
     pub rate: f64,
@@ -43,11 +43,11 @@ struct Charge_ {
     pub report_ids: Option<Vec<Option<i64>>>,
     pub transacted: bool,
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Charge {
     pub charge_id: i64,
     pub charge_time: DateTime<Utc>,
-    pub user_id: uuid::Uuid,
+    pub user_id: Uuid,
     pub charge_type: ChargeType,
     pub quantity: f64,
     pub rate: f64,
@@ -64,6 +64,16 @@ impl Charge {
             .into_iter()
             .map(|charge| charge.into())
             .collect::<Vec<_>>()
+        )
+    }
+    
+    pub fn retrieve(conn: &mut PgConnection, charge_id_: i64) -> Result<Charge> {
+        use crate::schema::charges::dsl::*;
+        Ok(
+            charges
+                .find(&charge_id_)
+                .first::<Charge_>(conn)?
+                .into()
         )
     }
 }
@@ -95,21 +105,21 @@ impl From<Charge_> for Charge {
 #[derive(Insertable, Debug)]
 #[diesel(table_name = charges)]
 pub struct NewCharge {
-    pub user_id: uuid::Uuid,
+    pub user_id: Uuid,
     pub charge_type: ChargeType,
     pub quantity: f64,
     pub rate: f64,
-    pub report_ids: Vec<i64>,
+    pub report_ids: Option<Vec<i64>>,
 }
 
 impl NewCharge {
     pub fn create(
         conn: &mut PgConnection,
-        user_id: uuid::Uuid,
+        user_id: Uuid,
         charge_type: ChargeType,
         quantity: f64,
         rate: f64,
-        report_ids: Vec<i64>
+        report_ids: Option<Vec<i64>>,
     ) -> Result<Charge> {
         let new_charge = NewCharge {
             user_id,
@@ -129,7 +139,7 @@ impl NewCharge {
 pub struct TimeCharge {
     pub timecharge_id: i64,
     pub timecharge_time: DateTime<Utc>,
-    pub user_id: uuid::Uuid,
+    pub user_id: Uuid,
     pub timecharge_type: TimeChargeType,
     pub amount: f64,
 }

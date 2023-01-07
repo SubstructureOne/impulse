@@ -6,6 +6,7 @@ use log::{error, info};
 use lazy_static::lazy_static;
 
 use std::env;
+use chrono::{DateTime, Duration};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 pub const DB_PREFIX: &str = "ImpulseTestingDb_";
@@ -88,5 +89,24 @@ impl Drop for TestContext {
 impl std::fmt::Display for TestContext {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.create_uri())
+    }
+}
+
+/// Implement a "soft equality" between two items.
+///
+/// Used for testing that a result from, e.g., a database, effectively matches
+/// the expected value. Separate from PartialEq/Eq because there might be
+/// elements (such as a unique identifier created by the database) that we
+/// don't know a priori and don't care about, or that are acceptable within a
+/// given tolerance, like DateTimes.
+pub trait ExpectedEquals {
+    fn expected_equals(&self, other: &Self) -> bool;
+}
+
+impl ExpectedEquals for DateTime<chrono::Utc> {
+    fn expected_equals(&self, other: &Self) -> bool {
+        let duration = other.signed_duration_since(self.clone());
+        // no Duration::abs?
+        duration < Duration::minutes(1) && -duration < Duration::minutes(1)
     }
 }
