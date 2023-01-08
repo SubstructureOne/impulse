@@ -26,7 +26,7 @@ impl ExpectedEquals for Charge {
 fn create_charge_test() -> Result<()> {
     let context = common::TestContext::new("create_charge")?;
     let mut conn = context.connect()?;
-    let user_id = Uuid::nil();
+    let user_id = Uuid::new_v4();
     let quantity = 1024.;
     let rate = 0.00015;
     let charge_type = ChargeType::DataTransferInBytes;

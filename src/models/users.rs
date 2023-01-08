@@ -1,9 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use diesel::debug_query;
 use diesel::prelude::*;
-use log::{trace};
-use diesel::pg::Pg;
+use uuid::Uuid;
 
 use crate::schema::users;
 
@@ -18,12 +16,50 @@ pub enum UserStatus {
 }
 
 #[derive(Queryable, Debug, PartialEq)]
-pub struct Users {
-    pub user_id: i64,
+pub struct User {
+    pub user_id: Uuid,
     pub pg_name: String,
     pub user_status: UserStatus,
     pub balance: f64,
     pub status_synced: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+impl User {
+    pub fn retrieve(conn: &mut PgConnection, user_id_: &Uuid) -> Result<User>
+    {
+        use crate::schema::users::dsl::*;
+        Ok(
+            users
+                .find(user_id_)
+                .first::<User>(conn)?
+                .into()
+        )
+    }
+}
+#[derive(Insertable, Debug)]
+#[diesel(table_name = users)]
+pub struct NewUser {
+    pub user_id: Uuid,
+    pub pg_name: String,
+    pub balance: f64,
+}
+impl NewUser {
+    pub fn create(
+        conn: &mut PgConnection,
+        user_id: Uuid,
+        pg_name: String,
+        balance: f64,
+    ) -> Result<User> {
+        let new_user = NewUser {
+            user_id,
+            pg_name,
+            balance,
+        };
+        Ok(
+            diesel::insert_into(users::table)
+                .values(&new_user)
+                .get_result::<User>(conn)?
+        )
+    }
 }
