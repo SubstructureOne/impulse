@@ -12,7 +12,7 @@ pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 pub const DB_PREFIX: &str = "ImpulseTestingDb_";
 
 lazy_static! {
-    static ref BASE_URL: String = {
+    pub static ref BASE_URL: String = {
         dotenv().ok();
         let _ = env_logger::builder().is_test(true).try_init();
         env::var("TESTING_BASE_URL").expect("Must specify TESTING_BASE_URL")
@@ -20,8 +20,8 @@ lazy_static! {
 }
 
 pub struct TestContext {
-    base_url: String,
-    db_name: String,
+    pub base_url: String,
+    pub db_name: String,
 }
 
 impl TestContext {

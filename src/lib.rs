@@ -5,6 +5,7 @@ use dotenvy::dotenv;
 
 pub mod schema;
 pub mod models;
+pub mod manage;
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();

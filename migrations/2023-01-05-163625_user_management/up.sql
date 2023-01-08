@@ -3,8 +3,17 @@ CREATE OR REPLACE FUNCTION create_pg_user(p_username text, p_password text)
     LANGUAGE plpgsql STRICT VOLATILE
 AS $BODY$
 BEGIN
-    EXECUTE FORMAT('CREATE ROLE %I WITH PASSWORD %L', p_username, p_password);
+    EXECUTE FORMAT('CREATE ROLE %I WITH LOGIN CREATEDB PASSWORD %L', p_username, p_password);
 end
+$BODY$;
+
+CREATE OR REPLACE FUNCTION drop_pg_user(p_username text)
+    RETURNS void
+    LANGUAGE plpgsql STRICT VOLATILE
+AS $BODY$
+BEGIN
+    EXECUTE FORMAT('DROP ROLE %I', p_username);
+end;
 $BODY$;
 
 CREATE TYPE userstatus AS ENUM (
