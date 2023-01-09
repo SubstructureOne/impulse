@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use anyhow::Result;
+use async_once::AsyncOnce;
 use diesel::prelude::*;
 use diesel_migrations::{EmbeddedMigrations, embed_migrations, MigrationHarness};
 use dotenvy::dotenv;
@@ -7,16 +10,48 @@ use lazy_static::lazy_static;
 
 use std::env;
 use chrono::{DateTime, Duration};
+use docker_api::{Container, Docker};
+use docker_api::opts::{ContainerCreateOpts, PublishPort};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 pub const DB_PREFIX: &str = "ImpulseTestingDb_";
 
 lazy_static! {
+    pub static ref ENV: HashMap<String, String> = {
+        dotenv().ok();
+        HashMap::from_iter(env::vars())
+    };
     pub static ref BASE_URL: String = {
         dotenv().ok();
         let _ = env_logger::builder().is_test(true).try_init();
-        env::var("TESTING_BASE_URL").expect("Must specify TESTING_BASE_URL")
+        ENV.get("TESTING_BASE_URL").expect("Must specify TESTING_BASE_URL").clone()
     };
+    static ref PG_CONTAINER: AsyncOnce<PostgresContainer> = AsyncOnce::new(async {
+        PostgresContainer::start().await.expect("Couldn't initialize docker container")
+    });
+}
+
+struct PostgresContainer {
+    container: Container,
+    base_url: String,
+}
+impl PostgresContainer {
+    pub async fn start() -> Result<PostgresContainer> {
+        let docker = Docker::unix("/var/run/docker.sock");
+        let env = vec!["POSTGRES_PASSWORD=pw"];
+        let opts = ContainerCreateOpts::builder()
+            .image("postgres:15")
+            .name("postgres")
+            .expose(PublishPort::tcp(5432), 9432)
+            .env(&env)
+            .build();
+        let container = docker.containers().create(&opts).await?;
+        container.start().await?;
+        Ok(PostgresContainer {
+            container,
+            base_url: "postgres://postgres:pw@localhost:9432".to_string(),
+        })
+    }
 }
 
 pub struct TestContext {
@@ -26,7 +61,8 @@ pub struct TestContext {
 
 impl TestContext {
     pub fn new(db_name: &str) -> Result<Self> {
-        let postgres_url = format!("{}/postgres", BASE_URL.as_str());
+        // let postgres_url = &PG_CONTAINER.get().await.base_url;
+        let postgres_url = format!("{}/postgres", BASE_URL.to_string());
         let mut conn = PgConnection::establish(&postgres_url)?;
 
         let db_name = DB_PREFIX.to_string() + db_name;
