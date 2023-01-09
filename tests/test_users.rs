@@ -46,3 +46,21 @@ pub fn create_user_test() -> Result<()> {
     assert_eq!(&retrieved, &new_user);
     Ok(())
 }
+
+#[test]
+pub fn disable_user_test() -> Result<()> {
+    let context = common::TestContext::new("disable_user")?;
+    let mut conn = context.connect()?;
+    let mut user = NewUser::create(
+        &mut conn,
+        Uuid::new_v4(),
+        "my_test_user".to_string(),
+        100.,
+    )?;
+    assert_eq!(user.user_status, UserStatus::Active);
+    user.disable(&mut conn)?;
+    assert_eq!(user.user_status, UserStatus::Disabled);
+    let retrieved = User::retrieve(&mut conn, &user.user_id)?;
+    assert_eq!(&retrieved, &user);
+    Ok(())
+}

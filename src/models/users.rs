@@ -36,6 +36,15 @@ impl User {
                 .into()
         )
     }
+
+    pub fn disable(&mut self, conn: &mut PgConnection) -> Result<()> {
+        use crate::schema::users::dsl::*;
+        let result = diesel::update(users.filter(user_id.eq(&self.user_id)))
+            .set(user_status.eq(UserStatus::Disabled))
+            .get_result::<User>(conn)?;
+        *self = result;
+        Ok(())
+    }
 }
 #[derive(Insertable, Debug)]
 #[diesel(table_name = users)]

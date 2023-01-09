@@ -2,9 +2,9 @@ use anyhow::{anyhow, Result};
 use diesel::prelude::*;
 use diesel::sql_types::Text;
 use log::trace;
+use uuid::Uuid;
 
 use crate::manage::ManagementConfig;
-use crate::models::users::User;
 
 sql_function!(
     fn create_pg_user(p_username: Text, p_password: Text);
@@ -60,6 +60,10 @@ impl<'a> PostgresManager<'a> {
             drop_pg_user(username)
         ).execute(&mut conn)?;
         trace!("{} rows affected", row_count);
+        Ok(())
+    }
+
+    pub fn disable_pg_user(&self, user_id: &Uuid) -> Result<()> {
         Ok(())
     }
 }

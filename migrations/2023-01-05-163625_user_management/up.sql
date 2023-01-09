@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION drop_pg_user(p_username text)
     LANGUAGE plpgsql STRICT VOLATILE
 AS $BODY$
 BEGIN
-    EXECUTE FORMAT('DROP ROLE %I', p_username);
+    EXECUTE FORMAT('DROP ROLE IF EXISTS %I', p_username);
 end;
 $BODY$;
 
