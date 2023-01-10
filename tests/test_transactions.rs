@@ -32,7 +32,7 @@ impl ExpectedEquals for ExtTransaction {
 #[test]
 fn create_transaction_test() -> Result<()> {
     let context = common::TestContext::new("create_txn")?;
-    let mut conn = context.connect()?;
+    let mut conn = context.config.pg_connect_db(&context.db_name)?;
     let from_user = Uuid::new_v4();
     let to_user = Uuid::new_v4();
     let charge_ids = vec![1,5,7];
@@ -66,7 +66,7 @@ fn create_transaction_test() -> Result<()> {
 #[test]
 fn create_exttransaction_test() -> Result<()> {
     let context = common::TestContext::new("create_exttransaction")?;
-    let mut conn = context.connect()?;
+    let mut conn = context.config.pg_connect_db(&context.db_name)?;
     let user_id = Uuid::new_v4();
     let amount = 154.3;
     let expected_txn = ExtTransaction {

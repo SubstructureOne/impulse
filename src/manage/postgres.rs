@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use anyhow::{anyhow, Result};
 use diesel::prelude::*;
 use diesel::sql_query;
@@ -14,7 +15,12 @@ sql_function!(
 );
 
 pub struct PostgresManager<'a> {
-    config: &'a ManagementConfig
+    pub config: &'a ManagementConfig
+}
+impl<'a> Display for PostgresManager<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.config.base_url())
+    }
 }
 
 pub struct PgUserInfo {
@@ -73,8 +79,12 @@ impl<'a> PostgresManager<'a> {
             Err(err_msg) => Err(anyhow!("Couldn't generate password: {}", err_msg)),
             Ok(password) => {
                 trace!("Creating PG user account: {}", username);
-                let row_count = diesel::select(
-                    create_pg_user(username, &password)
+                let row_count = sql_query(
+                    format!(
+                        r#"CREATE ROLE "{}" WITH LOGIN CREATEDB NOSUPERUSER NOINHERIT NOCREATEROLE PASSWORD '{}'"#,
+                        username,
+                        password,
+                    )
                 ).execute(&mut conn)?;
                 trace!("{} rows affected", row_count);
                 trace!("Creating user database: {}", username);
@@ -111,8 +121,14 @@ impl<'a> PostgresManager<'a> {
         trace!("Dropping user database '{}'", username);
         self.drop_database(username)?;
         trace!("Dropping user '{}'", username);
-        let row_count = diesel::select(
-            drop_pg_user(username)
+        // let row_count = diesel::select(
+        //     drop_pg_user(username)
+        // ).execute(&mut conn)?;
+        let row_count = sql_query(
+            format!(
+                r#"DROP ROLE IF EXISTS "{}""#,
+                username,
+            )
         ).execute(&mut conn)?;
         trace!("{} rows affected", row_count);
         Ok(())
@@ -121,10 +137,11 @@ impl<'a> PostgresManager<'a> {
     pub fn drop_database(&self, database_name: &str) -> Result<()> {
         let mut conn = self.config.pg_connect()?;
         info!("Force disconnecting any users connected to {}", &database_name);
-        let disconnect_users = sql_query(
+        let count = sql_query(
             "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1"
-        ).bind::<Text, _>(database_name.to_string());
-        let count = disconnect_users.execute(&mut conn)?;
+        )
+            .bind::<Text,_>(database_name)
+            .execute(&mut conn)?;
         info!("{} users disconnected", count);
 
         info!("Dropping database {}", &database_name);

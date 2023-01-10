@@ -1,5 +1,4 @@
 use anyhow::Result;
-use diesel::prelude::*;
 use docker_api::{Docker};
 use docker_api::opts::{ContainerCreateOpts, PublishPort};
 use impulse::manage::ManagementConfig;
@@ -9,11 +8,18 @@ use impulse::manage::postgres::PostgresManager;
 async fn main() -> Result<()> {
     let docker = Docker::unix("/var/run/docker.sock");
     dotenvy::dotenv().ok();
-    let password = std::env::var("DOCKER_POSTGRES_PASSWORD").unwrap();
-    let port = std::env::var("DOCKER_POSTGRES_PORT")
-        .unwrap()
-        .parse::<u32>()
-        .unwrap();
+    let port = std::env::var("DOCKER_DB_PORT")
+        .expect("Must specify DOCKER_DB_PORT")
+        .parse::<u32>()?;
+    let password = std::env::var("DOCKER_DB_PASSWORD")
+        .expect("Must specify DOCKER_DB_PASSWORD");
+    let config = ManagementConfig::new(
+        std::env::var("DOCKER_DB_HOST").expect("Must specify DOCKER_DB_HOST"),
+        port,
+        std::env::var("DOCKER_DB_USER").expect("Must specify DOCKER_DB_USER"),
+        password.clone(),
+    );
+
     let env = vec![
         format!("POSTGRES_PASSWORD={}", password)
     ];
@@ -26,14 +32,9 @@ async fn main() -> Result<()> {
     let result = docker.containers().create(&opts).await?;
     result.start().await?;
     // wait for the container to accept connections
-    let base_url = format!(
-        "postgres://postgres:{}@localhost:{}",
-        password, port
-    );
-    let postgres_url = format!("{}/postgres", base_url);
     loop {
-        eprintln!("Attempting connection {}...", &postgres_url);
-        let conn = PgConnection::establish(&postgres_url);
+        eprintln!("Attempting connection ...");
+        let conn = config.pg_connect();
         match conn {
             Ok(_) => {
                 eprintln!("Successfully connected to postgres database");
@@ -45,7 +46,7 @@ async fn main() -> Result<()> {
         }
     }
     println!("{}", result.id());
-    let config = ManagementConfig::new(&base_url, "postgres");
+
     let manager = PostgresManager::new(&config);
     manager.setup_database()?;
     Ok(())

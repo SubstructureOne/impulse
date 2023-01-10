@@ -24,8 +24,9 @@ impl ExpectedEquals for Charge {
 
 #[test]
 fn create_charge_test() -> Result<()> {
+    log::info!("Starting test");
     let context = common::TestContext::new("create_charge")?;
-    let mut conn = context.connect()?;
+    let mut conn = context.config.pg_connect_db(&context.db_name)?;
     let user_id = Uuid::new_v4();
     let quantity = 1024.;
     let rate = 0.00015;

@@ -1,5 +1,4 @@
 use anyhow::{Result};
-use log::info;
 
 use impulse::models::reports::*;
 
@@ -8,8 +7,7 @@ mod common;
 #[test]
 fn create_report_test() -> Result<()> {
     let context = common::TestContext::new("create_report")?;
-    info!("Connecting to database {}", context);
-    let mut conn = context.connect()?;
+    let mut conn = context.config.pg_connect_db(&context.db_name)?;
     let username = Some("MyUser".to_string());
     let packet_type = PostgresqlPacketType::Other;
     let direction = Some(PacketDirection::Backward);

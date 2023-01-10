@@ -21,13 +21,14 @@ pub const DB_PREFIX: &str = "ImpulseTestingDb_";
 lazy_static! {
     pub static ref ENV: HashMap<String, String> = {
         dotenv().ok();
+        let _ = env_logger::builder().is_test(true).try_init();
         HashMap::from_iter(env::vars())
     };
-    pub static ref BASE_URL: String = {
-        dotenv().ok();
-        let _ = env_logger::builder().is_test(true).try_init();
-        ENV.get("TESTING_BASE_URL").expect("Must specify TESTING_BASE_URL").clone()
-    };
+    // pub static ref BASE_URL: String = {
+    //     dotenv().ok();
+    //     let _ = env_logger::builder().is_test(true).try_init();
+    //     ENV.get("TESTING_BASE_URL").expect("Must specify TESTING_BASE_URL").clone()
+    // };
     // static ref PG_CONTAINER: AsyncOnce<PostgresContainer> = AsyncOnce::new(async {
     //     PostgresContainer::start().await.expect("Couldn't initialize docker container")
     // });
@@ -59,16 +60,21 @@ lazy_static! {
 // }
 
 pub struct TestContext {
-    pub base_url: String,
+    pub config: ManagementConfig,
     pub db_name: String,
 }
 
 impl TestContext {
     pub fn new(db_name: &str) -> Result<Self> {
         // let postgres_url = &PG_CONTAINER.get().await.base_url;
-        let postgres_url = format!("{}/postgres", BASE_URL.to_string());
-        info!("Testing postgres URL is: {}", postgres_url);
-        let mut conn = PgConnection::establish(&postgres_url)?;
+        let config = ManagementConfig::new(
+            ENV.get("TESTING_DB_HOST").expect("Must specify TESTING_DB_HOST"),
+            ENV.get("TESTING_DB_PORT").expect("Must specify TESTING_DB_PORT").parse::<u32>()?,
+            ENV.get("TESTING_DB_USER").expect("Must specify TESTING_DB_USER"),
+            ENV.get("TESTING_DB_PASSWORD").expect("Must specify TESTING_DB_PASSWORD"),
+        );
+        info!("Testing environment: {:?}, {}", &config, db_name);
+        let mut conn = config.pg_connect()?;
 
         let db_name = DB_PREFIX.to_string() + db_name;
         info!("Creating database {}", db_name);
@@ -76,29 +82,21 @@ impl TestContext {
         query.execute(&mut conn)?;
 
         info!("Running migrations on {}", db_name);
-        let context = Self {
-            base_url: BASE_URL.clone(),
-            db_name: db_name.to_string()
-        };
-        let mut conn = context.connect()?;
+        let mut conn = config.pg_connect_db(&db_name)?;
         conn.run_pending_migrations(MIGRATIONS).unwrap();
 
-        Ok(context)
+        Ok(
+            TestContext {
+                config,
+                db_name,
+            }
+        )
     }
 
     fn drop_database(&self) -> Result<()> {
-        let config = ManagementConfig::new(&self.base_url, "postgres");
-        let manager = PostgresManager::new(&config);
+        let manager = PostgresManager::new(&self.config);
         manager.drop_database(&self.db_name)?;
         Ok(())
-    }
-
-    pub fn connect(&self) -> Result<PgConnection> {
-        Ok(PgConnection::establish(&self.create_uri())?)
-    }
-
-    fn create_uri(&self) -> String {
-        format!("{}/{}", &self.base_url, &self.db_name)
     }
 }
 
@@ -114,11 +112,11 @@ impl Drop for TestContext {
     }
 }
 
-impl std::fmt::Display for TestContext {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.create_uri())
-    }
-}
+// impl std::fmt::Display for TestContext {
+//     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+//         write!(f, "{}", self.create_uri())
+//     }
+// }
 
 /// Implement a "soft equality" between two items.
 ///

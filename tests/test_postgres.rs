@@ -1,11 +1,12 @@
+mod common;
+
 use anyhow::Result;
-use diesel::PgConnection;
 use diesel::prelude::*;
 use log::{debug, info};
 use impulse::manage::ManagementConfig;
+
 use impulse::manage::postgres::PostgresManager;
 
-mod common;
 
 /// Context manager for making sure temporary test users get dropped at the
 /// end of the scope.
@@ -28,29 +29,23 @@ impl<'a> PgUserManager<'a> {
 #[test]
 pub fn user_creation_test() -> Result<()> {
     let context = common::TestContext::new("postgres_test")?;
-    let config = ManagementConfig::new(
-        context.base_url.clone(),
-        context.db_name.clone(),
-    );
-    let manager = PostgresManager::new(&config);
+    let manager = PostgresManager::new(&context.config);
     let username = "testuser";
     let user_manager = PgUserManager::new(&manager, username);
     user_manager.with(|| {
         let info = manager.create_pg_user_and_database(username)?;
-        let port = std::env::var("TESTING_DB_PORT")
-            .unwrap()
-            .parse::<u32>()
-            .unwrap();
         info!("User {} created with password {}", &info.username, &info.password);
-        let user_pguri = format!(
-            "postgres://{}:{}@localhost:{}/{}",
-            &info.username,
-            &info.password,
-            port,
-            &info.username
-        );
-        debug!("Testing that user can connect to their database ({})", user_pguri);
-        let mut user_conn = PgConnection::establish(&user_pguri)?;
+        // let user_pguri = format!(
+        //     "postgres://{}:{}@localhost:{}/{}",
+        //     &info.username,
+        //     &info.password,
+        //     port,
+        //     &info.username
+        // );
+        debug!("Testing that user can connect to their database ({})", &manager);
+        let user_config = manager.config.with_user(username, &info.password);
+        let user_conn_mgr = PostgresManager::new(&user_config);
+        let mut user_conn = user_conn_mgr.config.pg_connect_db(username)?;
         debug!("Testing that user can create tables");
         diesel::sql_query("CREATE TABLE test_table (col1 INT, col2 INT)")
             .execute(&mut user_conn)?;
@@ -58,13 +53,7 @@ pub fn user_creation_test() -> Result<()> {
         diesel::sql_query("INSERT INTO test_table (col1, col2) VALUES (1, 3)")
             .execute(&mut user_conn)?;
         debug!("Testing that user cannot connect to other databases");
-        let failed_pguri = format!(
-            "postgres://{}:{}@localhost:{}/postgres",
-            &info.username,
-            &info.password,
-            port
-        );
-        let failed_conn = PgConnection::establish(&failed_pguri);
+        let failed_conn = user_conn_mgr.config.pg_connect_db("postgres");
         if let Ok(_) = failed_conn {
             assert!(
                 false,

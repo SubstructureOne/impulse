@@ -16,8 +16,10 @@ echo "Starting Postgres container"
 CONTAINER_ID=$(cargo run --bin setup_database)
 echo "Running tests"
 set +e
-TESTING_BASE_URL="postgres://postgres:${DOCKER_POSTGRES_PASSWORD}@localhost:${DOCKER_POSTGRES_PORT}" \
-    TESTING_DB_PORT=${DOCKER_POSTGRES_PORT} \
+TESTING_DB_HOST=${DOCKER_DB_HOST} \
+    TESTING_DB_PORT=${DOCKER_DB_PORT} \
+    TESTING_DB_USER=${DOCKER_DB_USER} \
+    TESTING_DB_PASSWORD=${DOCKER_DB_PASSWORD} \
     RUST_LOG=trace \
     RUST_BACKTRACE=1 \
     cargo test
