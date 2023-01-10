@@ -1,17 +1,19 @@
 use std::collections::HashMap;
 
 use anyhow::Result;
-use async_once::AsyncOnce;
+// use async_once::AsyncOnce;
 use diesel::prelude::*;
 use diesel_migrations::{EmbeddedMigrations, embed_migrations, MigrationHarness};
 use dotenvy::dotenv;
-use log::{error, info};
+use log::{info};
 use lazy_static::lazy_static;
 
 use std::env;
 use chrono::{DateTime, Duration};
-use docker_api::{Container, Docker};
-use docker_api::opts::{ContainerCreateOpts, PublishPort};
+use impulse::manage::ManagementConfig;
+use impulse::manage::postgres::PostgresManager;
+// use docker_api::{Container, Docker};
+// use docker_api::opts::{ContainerCreateOpts, PublishPort};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 pub const DB_PREFIX: &str = "ImpulseTestingDb_";
@@ -26,33 +28,35 @@ lazy_static! {
         let _ = env_logger::builder().is_test(true).try_init();
         ENV.get("TESTING_BASE_URL").expect("Must specify TESTING_BASE_URL").clone()
     };
-    static ref PG_CONTAINER: AsyncOnce<PostgresContainer> = AsyncOnce::new(async {
-        PostgresContainer::start().await.expect("Couldn't initialize docker container")
-    });
+    // static ref PG_CONTAINER: AsyncOnce<PostgresContainer> = AsyncOnce::new(async {
+    //     PostgresContainer::start().await.expect("Couldn't initialize docker container")
+    // });
 }
 
-struct PostgresContainer {
-    container: Container,
-    base_url: String,
-}
-impl PostgresContainer {
-    pub async fn start() -> Result<PostgresContainer> {
-        let docker = Docker::unix("/var/run/docker.sock");
-        let env = vec!["POSTGRES_PASSWORD=pw"];
-        let opts = ContainerCreateOpts::builder()
-            .image("postgres:15")
-            .name("postgres")
-            .expose(PublishPort::tcp(5432), 9432)
-            .env(&env)
-            .build();
-        let container = docker.containers().create(&opts).await?;
-        container.start().await?;
-        Ok(PostgresContainer {
-            container,
-            base_url: "postgres://postgres:pw@localhost:9432".to_string(),
-        })
-    }
-}
+// struct PostgresContainer {
+//     container: Container,
+//     base_url: String,
+// }
+// impl PostgresContainer {
+//     pub async fn start() -> Result<PostgresContainer> {
+//         let docker = Docker::unix("/var/run/docker.sock");
+//         let env = vec!["POSTGRES_PASSWORD=pw"];
+//         let opts = ContainerCreateOpts::builder()
+//             .image("postgres:15")
+//             .name("postgres")
+//             .expose(PublishPort::tcp(5432), 9432)
+//             .env(&env)
+//             .build();
+//         let container = docker.containers().create(&opts).await?;
+//         container.start().await?;
+//         Ok(
+//             PostgresContainer {
+//                 container,
+//                 base_url: "postgres://postgres:pw@localhost:9432".to_string(),
+//             }
+//         )
+//     }
+// }
 
 pub struct TestContext {
     pub base_url: String,
@@ -63,6 +67,7 @@ impl TestContext {
     pub fn new(db_name: &str) -> Result<Self> {
         // let postgres_url = &PG_CONTAINER.get().await.base_url;
         let postgres_url = format!("{}/postgres", BASE_URL.to_string());
+        info!("Testing postgres URL is: {}", postgres_url);
         let mut conn = PgConnection::establish(&postgres_url)?;
 
         let db_name = DB_PREFIX.to_string() + db_name;
@@ -82,22 +87,9 @@ impl TestContext {
     }
 
     fn drop_database(&self) -> Result<()> {
-        let postgres_url = format!("{}/postgres", self.base_url);
-        let mut conn = PgConnection::establish(&postgres_url)?;
-
-        info!("Force disconnecting any users connected to {}", &self.db_name);
-        let disconnect_users = diesel::sql_query(
-            "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1"
-        ).bind::<diesel::sql_types::Text, _>(self.db_name.to_string());
-        let count = disconnect_users.execute(&mut conn)?;
-        info!("{} users disconnected", count);
-
-        info!("Dropping database {}", &self.db_name);
-        let query = diesel::sql_query(
-            format!(r#"DROP DATABASE "{}""#, &self.db_name)
-        );
-        query.execute(&mut conn)?;
-
+        let config = ManagementConfig::new(&self.base_url, "postgres");
+        let manager = PostgresManager::new(&config);
+        manager.drop_database(&self.db_name)?;
         Ok(())
     }
 

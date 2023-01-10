@@ -20,10 +20,14 @@ impl ManagementConfig {
     }
 
     pub fn pg_connect(&self) -> Result<PgConnection> {
-        Ok(PgConnection::establish(&self.create_uri())?)
+        Ok(PgConnection::establish(&self.create_uri(&self.db_name))?)
     }
 
-    fn create_uri(&self) -> String {
-        format!("{}/{}", &self.pg_base_uri, &self.db_name)
+    pub fn pg_connect_db(&self, dbname: &str) -> Result<PgConnection> {
+        Ok(PgConnection::establish(&self.create_uri(dbname))?)
+    }
+
+    fn create_uri(&self, db_name: &str) -> String {
+        format!("{}/{}", &self.pg_base_uri, &db_name)
     }
 }

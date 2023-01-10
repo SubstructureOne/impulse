@@ -1,7 +1,6 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use log::{trace};
 use uuid::Uuid;
 
 use crate::schema::{transactions, exttransactions};

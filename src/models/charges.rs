@@ -56,7 +56,7 @@ pub struct Charge {
     pub transacted: bool,
 }
 impl Charge {
-    fn untransacted(conn: &mut PgConnection) -> Result<Vec<Charge>> {
+    pub fn untransacted(conn: &mut PgConnection) -> Result<Vec<Charge>> {
         use crate::schema::charges::dsl::*;
         Ok(charges
             .filter(transacted.eq(false))

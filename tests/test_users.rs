@@ -1,5 +1,4 @@
 use anyhow::{Result};
-use log::trace;
 use uuid::Uuid;
 
 use impulse::models::users::*;
