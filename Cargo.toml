@@ -8,6 +8,7 @@ edition = "2021"
 anyhow = "1.0.68"
 async_once = "0.2.6"
 chrono = "0.4.23"
+clap = { version = "4.0.32", features = ["derive"] }
 diesel = { version = "2.0.2", features = ["postgres", "chrono", "serde_json", "uuid"] }
 diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
 diesel_migrations = { version = "2.0.0", features = ["postgres"] }

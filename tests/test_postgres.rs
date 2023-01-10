@@ -1,9 +1,9 @@
 mod common;
 
+use std::rc::Rc;
 use anyhow::Result;
 use diesel::prelude::*;
 use log::{debug, info};
-use impulse::manage::ManagementConfig;
 
 use impulse::manage::postgres::PostgresManager;
 
@@ -12,7 +12,7 @@ use impulse::manage::postgres::PostgresManager;
 /// end of the scope.
 struct PgUserManager<'a> {
     username: &'a str,
-    pg_manager: &'a PostgresManager<'a>,
+    pg_manager: &'a PostgresManager,
 }
 impl<'a> PgUserManager<'a> {
     fn new(pg_manager: &'a PostgresManager, username: &'a str) -> PgUserManager<'a> {
@@ -29,7 +29,7 @@ impl<'a> PgUserManager<'a> {
 #[test]
 pub fn user_creation_test() -> Result<()> {
     let context = common::TestContext::new("postgres_test")?;
-    let manager = PostgresManager::new(&context.config);
+    let manager = PostgresManager::new(context.config.clone());
     let username = "testuser";
     let user_manager = PgUserManager::new(&manager, username);
     user_manager.with(|| {
@@ -43,9 +43,9 @@ pub fn user_creation_test() -> Result<()> {
         //     &info.username
         // );
         debug!("Testing that user can connect to their database ({})", &manager);
-        let user_config = manager.config.with_user(username, &info.password);
-        let user_conn_mgr = PostgresManager::new(&user_config);
-        let mut user_conn = user_conn_mgr.config.pg_connect_db(username)?;
+        let user_config = Rc::new(manager.with_user(username, &info.password));
+        let user_conn_mgr = PostgresManager::new(user_config.clone());
+        let mut user_conn = user_conn_mgr.pg_connect_db(username)?;
         debug!("Testing that user can create tables");
         diesel::sql_query("CREATE TABLE test_table (col1 INT, col2 INT)")
             .execute(&mut user_conn)?;
@@ -53,7 +53,7 @@ pub fn user_creation_test() -> Result<()> {
         diesel::sql_query("INSERT INTO test_table (col1, col2) VALUES (1, 3)")
             .execute(&mut user_conn)?;
         debug!("Testing that user cannot connect to other databases");
-        let failed_conn = user_conn_mgr.config.pg_connect_db("postgres");
+        let failed_conn = user_conn_mgr.pg_connect_db("postgres");
         if let Ok(_) = failed_conn {
             assert!(
                 false,

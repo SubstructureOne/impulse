@@ -9,6 +9,7 @@ use log::{info};
 use lazy_static::lazy_static;
 
 use std::env;
+use std::rc::Rc;
 use chrono::{DateTime, Duration};
 use impulse::manage::ManagementConfig;
 use impulse::manage::postgres::PostgresManager;
@@ -60,21 +61,23 @@ lazy_static! {
 // }
 
 pub struct TestContext {
-    pub config: ManagementConfig,
+    pub config: Rc<ManagementConfig>,
+    pub manager: PostgresManager,
     pub db_name: String,
 }
 
 impl TestContext {
     pub fn new(db_name: &str) -> Result<Self> {
         // let postgres_url = &PG_CONTAINER.get().await.base_url;
-        let config = ManagementConfig::new(
+        let config = Rc::new(ManagementConfig::new(
             ENV.get("TESTING_DB_HOST").expect("Must specify TESTING_DB_HOST"),
             ENV.get("TESTING_DB_PORT").expect("Must specify TESTING_DB_PORT").parse::<u32>()?,
             ENV.get("TESTING_DB_USER").expect("Must specify TESTING_DB_USER"),
             ENV.get("TESTING_DB_PASSWORD").expect("Must specify TESTING_DB_PASSWORD"),
-        );
-        info!("Testing environment: {:?}, {}", &config, db_name);
-        let mut conn = config.pg_connect()?;
+        ));
+        let manager = PostgresManager::new(config.clone());
+        info!("Testing environment: {}", manager);
+        let mut conn = manager.pg_connect()?;
 
         let db_name = DB_PREFIX.to_string() + db_name;
         info!("Creating database {}", db_name);
@@ -82,20 +85,20 @@ impl TestContext {
         query.execute(&mut conn)?;
 
         info!("Running migrations on {}", db_name);
-        let mut conn = config.pg_connect_db(&db_name)?;
+        let mut conn = manager.pg_connect_db(&db_name)?;
         conn.run_pending_migrations(MIGRATIONS).unwrap();
 
         Ok(
             TestContext {
                 config,
+                manager,
                 db_name,
             }
         )
     }
 
     fn drop_database(&self) -> Result<()> {
-        let manager = PostgresManager::new(&self.config);
-        manager.drop_database(&self.db_name)?;
+        self.manager.drop_database(&self.db_name)?;
         Ok(())
     }
 }

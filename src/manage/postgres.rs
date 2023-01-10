@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use std::rc::Rc;
 use anyhow::{anyhow, Result};
 use diesel::prelude::*;
 use diesel::sql_query;
@@ -14,12 +15,51 @@ sql_function!(
     fn drop_pg_user(p_username: Text);
 );
 
-pub struct PostgresManager<'a> {
-    pub config: &'a ManagementConfig
+pub struct PostgresManager {
+    pub config: Rc<ManagementConfig>,
 }
-impl<'a> Display for PostgresManager<'a> {
+impl<'a> Display for PostgresManager {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.config.base_url())
+        write!(f, "{}", self.base_url())
+    }
+}
+impl PostgresManager {
+    pub fn pg_connect(&self) -> Result<PgConnection> {
+        Ok(self.pg_connect_db(&self.config.pg_user)?)
+    }
+
+    pub fn pg_connect_db(&self, db_name: &str) -> Result<PgConnection> {
+        Ok(PgConnection::establish(&self.create_uri(db_name))?)
+    }
+
+    pub fn with_user(&self, username: &str, password: &str) -> ManagementConfig {
+        ManagementConfig::new(
+            self.config.pg_host.clone(),
+            self.config.pg_port.clone(),
+            username,
+            password,
+        )
+    }
+
+    pub fn base_url(&self) -> String {
+        format!(
+            "postgres://{}:{}@{}:{}",
+            self.config.pg_user,
+            self.config.pg_pw,
+            self.config.pg_host,
+            self.config.pg_port,
+        )
+    }
+
+    fn create_uri(&self, db_name: &str) -> String {
+        format!(
+            "postgres://{}:{}@{}:{}/{}",
+            self.config.pg_user,
+            self.config.pg_pw,
+            self.config.pg_host,
+            self.config.pg_port,
+            db_name,
+        )
     }
 }
 
@@ -28,8 +68,8 @@ pub struct PgUserInfo {
     pub password: String,
 }
 
-impl<'a> PostgresManager<'a> {
-    pub fn new(config: &ManagementConfig) -> PostgresManager {
+impl PostgresManager {
+    pub fn new(config: Rc<ManagementConfig>) -> PostgresManager {
         PostgresManager { config }
     }
 
@@ -38,7 +78,7 @@ impl<'a> PostgresManager<'a> {
     /// Only needs to be run once to initialize a Postgres instance, but
     /// idempotent in actions.
     pub fn setup_database(&self) -> Result<()> {
-        let mut conn = self.config.pg_connect()?;
+        let mut conn = self.pg_connect()?;
         // revoke all rights from public on public schema
         sql_query("REVOKE ALL ON DATABASE template1 FROM public;").execute(&mut conn)?;
         sql_query("REVOKE ALL ON DATABASE postgres FROM public;").execute(&mut conn)?;
@@ -63,7 +103,7 @@ impl<'a> PostgresManager<'a> {
         if !name_regex.is_match(username) {
             return Err(anyhow!("Illegal username: {}", username));
         }
-        let mut conn = self.config.pg_connect()?;
+        let mut conn = self.pg_connect()?;
         let password_gen = passwords::PasswordGenerator::new()
             .length(16)
             .numbers(true)
@@ -102,7 +142,7 @@ impl<'a> PostgresManager<'a> {
                 ).execute(&mut conn)?;
                 trace!("{} rows affected", row_count);
                 trace!("Connecting to new database");
-                let mut user_conn = self.config.pg_connect_db(username)?;
+                let mut user_conn = self.pg_connect_db(username)?;
                 trace!("Granting all to user '{}' on database '{}'", username, username);
                 let row_count = sql_query(
                     format!("GRANT ALL ON SCHEMA public TO {} WITH GRANT OPTION", username)
@@ -117,7 +157,7 @@ impl<'a> PostgresManager<'a> {
     }
 
     pub fn drop_pg_user(&self, username: &str) -> Result<()> {
-        let mut conn = self.config.pg_connect()?;
+        let mut conn = self.pg_connect()?;
         trace!("Dropping user database '{}'", username);
         self.drop_database(username)?;
         trace!("Dropping user '{}'", username);
@@ -135,7 +175,7 @@ impl<'a> PostgresManager<'a> {
     }
 
     pub fn drop_database(&self, database_name: &str) -> Result<()> {
-        let mut conn = self.config.pg_connect()?;
+        let mut conn = self.pg_connect()?;
         info!("Force disconnecting any users connected to {}", &database_name);
         let count = sql_query(
             "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1"

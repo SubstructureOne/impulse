@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use anyhow::Result;
 use docker_api::{Docker};
 use docker_api::opts::{ContainerCreateOpts, PublishPort};
@@ -13,12 +14,12 @@ async fn main() -> Result<()> {
         .parse::<u32>()?;
     let password = std::env::var("DOCKER_DB_PASSWORD")
         .expect("Must specify DOCKER_DB_PASSWORD");
-    let config = ManagementConfig::new(
+    let config = Rc::new(ManagementConfig::new(
         std::env::var("DOCKER_DB_HOST").expect("Must specify DOCKER_DB_HOST"),
         port,
         std::env::var("DOCKER_DB_USER").expect("Must specify DOCKER_DB_USER"),
         password.clone(),
-    );
+    ));
 
     let env = vec![
         format!("POSTGRES_PASSWORD={}", password)
@@ -32,9 +33,10 @@ async fn main() -> Result<()> {
     let result = docker.containers().create(&opts).await?;
     result.start().await?;
     // wait for the container to accept connections
+    let manager = PostgresManager::new(config.clone());
     loop {
         eprintln!("Attempting connection ...");
-        let conn = config.pg_connect();
+        let conn = manager.pg_connect();
         match conn {
             Ok(_) => {
                 eprintln!("Successfully connected to postgres database");
@@ -47,7 +49,6 @@ async fn main() -> Result<()> {
     }
     println!("{}", result.id());
 
-    let manager = PostgresManager::new(&config);
     manager.setup_database()?;
     Ok(())
 }

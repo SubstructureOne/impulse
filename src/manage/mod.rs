@@ -1,5 +1,4 @@
 use anyhow::Result;
-use diesel::prelude::*;
 
 pub mod postgres;
 
@@ -26,41 +25,14 @@ impl ManagementConfig {
         }
     }
 
-    pub fn pg_connect(&self) -> Result<PgConnection> {
-        Ok(self.pg_connect_db(&self.pg_user)?)
-    }
-
-    pub fn pg_connect_db(&self, db_name: &str) -> Result<PgConnection> {
-        Ok(PgConnection::establish(&self.create_uri(db_name))?)
-    }
-
-    pub fn with_user(&self, username: &str, password: &str) -> ManagementConfig {
-        ManagementConfig::new(
-            self.pg_host.clone(),
-            self.pg_port.clone(),
-            username,
-            password,
-        )
-    }
-
-    pub fn base_url(&self) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}",
-            self.pg_user,
-            self.pg_pw,
-            self.pg_host,
-            self.pg_port,
-        )
-    }
-
-    fn create_uri(&self, db_name: &str) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}/{}",
-            self.pg_user,
-            self.pg_pw,
-            self.pg_host,
-            self.pg_port,
-            db_name,
+    pub fn from_env() -> Result<ManagementConfig> {
+        Ok(
+            ManagementConfig {
+                pg_host: std::env::var("DB_HOST")?,
+                pg_port: std::env::var("DB_PORT")?.parse::<u32>()?,
+                pg_user: std::env::var("DB_USER")?,
+                pg_pw: std::env::var("DB_PASSWORD")?,
+            }
         )
     }
 }
