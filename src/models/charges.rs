@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
@@ -5,11 +7,12 @@ use diesel::debug_query;
 use diesel::pg::Pg;
 use log::{trace};
 use uuid::Uuid;
+use crate::models::reports::{PacketDirection, Report};
 
 use crate::schema::charges;
 
 
-#[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Eq)]
+#[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Eq, Hash, Copy, Clone)]
 #[DieselTypePath = "crate::schema::sql_types::Chargetype"]
 #[DbValueStyle = "verbatim"]
 pub enum ChargeType {
@@ -76,6 +79,51 @@ impl Charge {
                 .into()
         )
     }
+
+    pub fn create_charges(conn: &mut PgConnection, reports: Vec<Report>) -> Result<Vec<Charge>> {
+        let mut user2type2charge: HashMap<Option<String>, HashMap<ChargeType, NewCharge>> = HashMap::new();
+        for report in reports {
+            let type2charge = user2type2charge
+                .entry(report.username.clone())
+                .or_insert(HashMap::new());
+            Self::append_report(type2charge, &report);
+        }
+        user2type2charge
+            .values()
+            .flat_map(|hashmap| hashmap.values())
+            .map(|new_charge| new_charge.commit(conn))
+            .collect::<Result<Vec<Charge>>>()
+    }
+
+    fn append_report(existing_charges: &mut HashMap<ChargeType, NewCharge>, new_report: &Report) {
+        if let Some(charge_type) = Self::report_charge_type(new_report) {
+            let existing = existing_charges.get_mut(&charge_type);
+            match existing {
+                Some(charge) => {
+                    charge.quantity += new_report.packet_bytes.as_ref().unwrap().len() as f64;
+                    charge.report_ids.as_mut().unwrap().push(new_report.report_id);
+                },
+                None => {
+                    let charge = NewCharge {
+                        user_id: Uuid::new_v4(), // FIXME
+                        charge_type,
+                        quantity: new_report.packet_bytes.as_ref().unwrap().len() as f64,
+                        rate: 0.1, // FIXME
+                        report_ids: Some(vec![new_report.report_id])
+                    };
+                    existing_charges.insert(charge_type, charge);
+                }
+            }
+        }
+    }
+
+    fn report_charge_type(report: &Report) -> Option<ChargeType> {
+        match report.direction {
+            None => None,
+            Some(PacketDirection::Forward) => Some(ChargeType::DataTransferInBytes),
+            Some(PacketDirection::Backward) => Some(ChargeType::DataTransferOutBytes),
+        }
+    }
 }
 impl From<Charge_> for Charge {
     fn from(charge_: Charge_) -> Self {
@@ -113,23 +161,25 @@ pub struct NewCharge {
 }
 
 impl NewCharge {
-    pub fn create(
-        conn: &mut PgConnection,
+    pub fn new(
         user_id: Uuid,
         charge_type: ChargeType,
         quantity: f64,
         rate: f64,
         report_ids: Option<Vec<i64>>,
-    ) -> Result<Charge> {
-        let new_charge = NewCharge {
+    ) -> NewCharge {
+        NewCharge {
             user_id,
             charge_type,
             quantity,
             rate,
             report_ids
-        };
+        }
+    }
+
+    pub fn commit(&self, conn: &mut PgConnection) -> Result<Charge> {
         let query = diesel::insert_into(charges::table)
-            .values(&new_charge);
+            .values(self);
         trace!("Creating charge: {}", debug_query::<Pg, _>(&query));
         Ok(query.get_result::<Charge_>(conn)?.into())
     }

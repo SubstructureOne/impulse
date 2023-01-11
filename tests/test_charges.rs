@@ -46,14 +46,13 @@ fn create_charge_test() -> Result<()> {
     };
     trace!("Expected charge: {:?}", &expected_charge);
 
-    let charge = NewCharge::create(
-        &mut conn,
+    let charge = NewCharge::new(
         user_id,
         ChargeType::DataTransferInBytes,
         quantity,
         rate,
         report_ids.clone(),
-    )?;
+    ).commit(&mut conn)?;
     trace!("New charge: {:?}", &charge);
     assert!(charge.expected_equals(&expected_charge));
 

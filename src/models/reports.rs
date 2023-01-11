@@ -1,9 +1,10 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use diesel::debug_query;
+use diesel::pg::Pg;
 use diesel::prelude::*;
 use log::{trace};
-use diesel::pg::Pg;
+use uuid::Uuid;
 
 use crate::schema::reports;
 
@@ -36,7 +37,6 @@ pub struct Report {
     pub packet_bytes: Option<Vec<u8>>,
     pub charged: bool,
 }
-
 impl Report {
     pub fn for_user<S: Into<String>>(conn: &mut PgConnection, username_: S) -> Result<Vec<Report>>{
         use crate::schema::reports::dsl::*;
@@ -44,7 +44,17 @@ impl Report {
             .filter(username.eq(&username_.into()))
             .load::<Report>(conn)?)
     }
+}
 
+#[derive(Queryable, Debug, PartialEq)]
+pub struct ReportToCharge {
+    pub report_id: i64,
+    pub user_id: Uuid,
+    pub packet_type: PostgresqlPacketType,
+    pub direction: Option<PacketDirection>,
+    pub num_bytes: i32,
+}
+impl ReportToCharge {
     pub fn uncharged(conn: &mut PgConnection) -> Result<Vec<Report>> {
         use crate::schema::reports::dsl::*;
         Ok(reports

@@ -83,3 +83,8 @@ BEGIN
     END IF;
 END;
 $$;
+
+CREATE OR REPLACE VIEW reports_to_charge AS
+    SELECT report_id, user_id, packet_type, direction, length(packet_bytes) as num_bytes FROM reports r
+    LEFT OUTER JOIN users u ON u.pg_name = r.username
+    WHERE NOT CHARGED;

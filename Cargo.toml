@@ -15,6 +15,7 @@ diesel_migrations = { version = "2.0.0", features = ["postgres"] }
 docker-api = "0.12.2"
 dotenvy = "0.15.6"
 env_logger = "0.10.0"
+itertools = "0.10.5"
 lazy_static = "1.4.0"
 log = "0.4.17"
 passwords = "3.1.12"

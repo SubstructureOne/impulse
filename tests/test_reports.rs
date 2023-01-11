@@ -38,7 +38,7 @@ fn create_report_test() -> Result<()> {
     assert_eq!(&report.packet_info, &packet_info);
     assert_eq!(&report.packet_bytes, &packet_bytes);
     assert_eq!(report.charged, charged);
-    let uncharged = Report::uncharged(&mut conn)?;
+    let uncharged = ReportToCharge::uncharged(&mut conn)?;
     assert_eq!(uncharged.len(), 1);
     assert_eq!(&uncharged[0], &report);
     Ok(())
