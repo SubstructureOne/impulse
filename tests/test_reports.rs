@@ -40,6 +40,6 @@ fn create_report_test() -> Result<()> {
     assert_eq!(report.charged, charged);
     let uncharged = ReportToCharge::uncharged(&mut conn)?;
     assert_eq!(uncharged.len(), 1);
-    assert_eq!(&uncharged[0], &report);
+    assert_eq!(uncharged[0].report_id, report.report_id);
     Ok(())
 }

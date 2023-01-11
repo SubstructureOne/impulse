@@ -46,21 +46,35 @@ impl Report {
     }
 }
 
+mod views {
+    use diesel::prelude::*;
+    table! {
+        use diesel::sql_types::*;
+        use crate::schema::sql_types::Pgpkttype;
+        use crate::schema::sql_types::Pktdirection;
+
+        reports_to_charge (report_id) {
+            report_id -> Int8,
+            user_id -> Nullable<Uuid>,
+            packet_type -> Pgpkttype,
+            direction -> Nullable<Pktdirection>,
+            num_bytes -> Int4,
+        }
+    }
+}
+
 #[derive(Queryable, Debug, PartialEq)]
 pub struct ReportToCharge {
     pub report_id: i64,
-    pub user_id: Uuid,
+    pub user_id: Option<Uuid>,
     pub packet_type: PostgresqlPacketType,
     pub direction: Option<PacketDirection>,
     pub num_bytes: i32,
 }
 impl ReportToCharge {
-    pub fn uncharged(conn: &mut PgConnection) -> Result<Vec<Report>> {
-        use crate::schema::reports::dsl::*;
-        Ok(reports
-            .filter(charged.eq(false))
-            .load::<Report>(conn)?
-        )
+    pub fn uncharged(conn: &mut PgConnection) -> Result<Vec<ReportToCharge>> {
+        use views::reports_to_charge::dsl::*;
+        Ok(reports_to_charge.load::<ReportToCharge>(conn)?)
     }
 }
 

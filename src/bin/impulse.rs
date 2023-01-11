@@ -3,8 +3,10 @@ use std::rc::Rc;
 use anyhow::Result;
 use clap::Parser;
 use log::info;
+use uuid::Uuid;
 use impulse::manage::ManagementConfig;
 use impulse::manage::postgres::PostgresManager;
+use impulse::models::charges::Charge;
 use impulse::models::reports::{Report, ReportToCharge};
 
 #[derive(Debug, Parser)]
@@ -28,24 +30,7 @@ pub async fn main() -> Result<()> {
         let manager = PostgresManager::new(config.clone());
         let mut conn = manager.pg_connect_db(&db_name)?;
         let uncharged = ReportToCharge::uncharged(&mut conn)?;
-        let mut grouped: HashMap<String, Vec<Report>> = HashMap::new();
-        let mut no_user: Vec<Report> = vec![];
-        for report in uncharged.into_iter() {
-            match report.username.clone() {
-                Some(username) => {
-                    let user_reports = grouped.get_mut(&username);
-                    match user_reports {
-                        Some(report_vec) => report_vec.push(report),
-                        None => {
-                            let mut report_vec = vec![];
-                            report_vec.push(report);
-                            grouped.insert(username.clone(), report_vec);
-                        }
-                    }
-                }
-                None => no_user.push(report)
-            }
-        }
-    }
+        let charges = Charge::create_charges(&mut conn, uncharged)?;
+   }
     Ok(())
 }

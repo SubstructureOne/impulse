@@ -7,7 +7,7 @@ use diesel::debug_query;
 use diesel::pg::Pg;
 use log::{trace};
 use uuid::Uuid;
-use crate::models::reports::{PacketDirection, Report};
+use crate::models::reports::{PacketDirection, Report, ReportToCharge};
 
 use crate::schema::charges;
 
@@ -80,11 +80,11 @@ impl Charge {
         )
     }
 
-    pub fn create_charges(conn: &mut PgConnection, reports: Vec<Report>) -> Result<Vec<Charge>> {
-        let mut user2type2charge: HashMap<Option<String>, HashMap<ChargeType, NewCharge>> = HashMap::new();
+    pub fn create_charges(conn: &mut PgConnection, reports: Vec<ReportToCharge>) -> Result<Vec<Charge>> {
+        let mut user2type2charge: HashMap<Option<Uuid>, HashMap<ChargeType, NewCharge>> = HashMap::new();
         for report in reports {
             let type2charge = user2type2charge
-                .entry(report.username.clone())
+                .entry(report.user_id.clone())
                 .or_insert(HashMap::new());
             Self::append_report(type2charge, &report);
         }
@@ -95,19 +95,19 @@ impl Charge {
             .collect::<Result<Vec<Charge>>>()
     }
 
-    fn append_report(existing_charges: &mut HashMap<ChargeType, NewCharge>, new_report: &Report) {
+    fn append_report(existing_charges: &mut HashMap<ChargeType, NewCharge>, new_report: &ReportToCharge) {
         if let Some(charge_type) = Self::report_charge_type(new_report) {
             let existing = existing_charges.get_mut(&charge_type);
             match existing {
                 Some(charge) => {
-                    charge.quantity += new_report.packet_bytes.as_ref().unwrap().len() as f64;
+                    charge.quantity += new_report.num_bytes as f64;
                     charge.report_ids.as_mut().unwrap().push(new_report.report_id);
                 },
                 None => {
                     let charge = NewCharge {
-                        user_id: Uuid::new_v4(), // FIXME
+                        user_id: new_report.user_id.unwrap(), // FIXME
                         charge_type,
-                        quantity: new_report.packet_bytes.as_ref().unwrap().len() as f64,
+                        quantity: new_report.num_bytes as f64,
                         rate: 0.1, // FIXME
                         report_ids: Some(vec![new_report.report_id])
                     };
@@ -117,7 +117,7 @@ impl Charge {
         }
     }
 
-    fn report_charge_type(report: &Report) -> Option<ChargeType> {
+    fn report_charge_type(report: &ReportToCharge) -> Option<ChargeType> {
         match report.direction {
             None => None,
             Some(PacketDirection::Forward) => Some(ChargeType::DataTransferInBytes),
