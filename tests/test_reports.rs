@@ -1,4 +1,5 @@
 use anyhow::{Result};
+use log::info;
 
 use impulse::models::reports::*;
 
@@ -23,6 +24,7 @@ fn create_report_test() -> Result<()> {
     );
     let packet_bytes = None;
     let charged = false;
+    info!("Creating report");
     let report = NewReport::create(
         &mut conn,
         username.clone(),
@@ -32,6 +34,7 @@ fn create_report_test() -> Result<()> {
         packet_bytes.clone(),
         charged
     )?;
+    info!("Report created");
     assert_eq!(&report.username, &username);
     assert_eq!(report.packet_type, packet_type);
     assert_eq!(report.direction, direction);

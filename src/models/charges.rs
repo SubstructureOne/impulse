@@ -96,18 +96,21 @@ impl Charge {
     }
 
     fn append_report(existing_charges: &mut HashMap<ChargeType, NewCharge>, new_report: &ReportToCharge) {
+        if new_report.num_bytes == None {
+            return;
+        }
         if let Some(charge_type) = Self::report_charge_type(new_report) {
             let existing = existing_charges.get_mut(&charge_type);
             match existing {
                 Some(charge) => {
-                    charge.quantity += new_report.num_bytes as f64;
+                    charge.quantity += new_report.num_bytes.unwrap() as f64;
                     charge.report_ids.as_mut().unwrap().push(new_report.report_id);
                 },
                 None => {
                     let charge = NewCharge {
                         user_id: new_report.user_id.unwrap(), // FIXME
                         charge_type,
-                        quantity: new_report.num_bytes as f64,
+                        quantity: new_report.num_bytes.unwrap() as f64,
                         rate: 0.1, // FIXME
                         report_ids: Some(vec![new_report.report_id])
                     };

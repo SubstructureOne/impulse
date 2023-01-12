@@ -58,7 +58,7 @@ mod views {
             user_id -> Nullable<Uuid>,
             packet_type -> Pgpkttype,
             direction -> Nullable<Pktdirection>,
-            num_bytes -> Int4,
+            num_bytes -> Nullable<Int4>,
         }
     }
 }
@@ -69,7 +69,7 @@ pub struct ReportToCharge {
     pub user_id: Option<Uuid>,
     pub packet_type: PostgresqlPacketType,
     pub direction: Option<PacketDirection>,
-    pub num_bytes: i32,
+    pub num_bytes: Option<i32>,
 }
 impl ReportToCharge {
     pub fn uncharged(conn: &mut PgConnection) -> Result<Vec<ReportToCharge>> {
