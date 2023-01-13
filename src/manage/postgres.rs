@@ -175,6 +175,7 @@ impl PostgresManager {
     }
 
     pub fn drop_database(&self, database_name: &str) -> Result<()> {
+        // TODO: just use DROP DATABASE WITH FORCE
         let mut conn = self.pg_connect()?;
         info!("Force disconnecting any users connected to {}", &database_name);
         let count = sql_query(

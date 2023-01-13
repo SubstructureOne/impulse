@@ -84,6 +84,40 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION add_internal_transaction_from_reports(
+    p_from_user uuid,
+    p_to_user uuid,
+    p_charge_ids bigint[],
+    p_disable_at double precision
+)
+    RETURNS bigint
+    LANGUAGE plpgsql
+AS $BODY$
+DECLARE
+    amount_transacted double precision;
+    from_user_balance double precision;
+    new_txn_id bigint;
+--     new_txn transactions;
+BEGIN
+    SELECT SUM(amount) INTO STRICT amount_transacted FROM charges WHERE charge_id = ANY(p_charge_ids);
+    INSERT INTO transactions (from_user, to_user, charge_ids, amount)
+        VALUES (p_from_user, p_to_user, p_charge_ids, amount_transacted)
+        RETURNING txn_id into new_txn_id;
+    UPDATE charges SET transacted = true WHERE charge_id = ANY (p_charge_ids);
+    UPDATE users
+        SET balance = balance - amount_transacted
+        WHERE user_id = p_from_user
+        RETURNING balance INTO from_user_balance;
+    UPDATE users
+        SET balance = balance + amount_transacted
+        WHERE user_id = p_to_user;
+    IF from_user_balance < p_disable_at THEN
+        UPDATE users SET user_status = 'Disabled' WHERE user_id = from_user;
+    END IF;
+    RETURN new_txn_id;
+END;
+$BODY$;
+
 CREATE OR REPLACE VIEW reports_to_charge AS
     SELECT packet_id as report_id, user_id, packet_type, direction, length(packet_bytes) as num_bytes FROM reports r
     LEFT OUTER JOIN users u ON u.pg_name = r.username

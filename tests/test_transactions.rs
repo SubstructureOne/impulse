@@ -2,9 +2,11 @@ mod common;
 
 use anyhow::{Result};
 use uuid::Uuid;
+use impulse::models::charges::{ChargeType, NewCharge};
 
 use impulse::models::transactions::*;
 use impulse::models::transactions::NewTransaction;
+use impulse::schema::transactions::charge_ids;
 
 use crate::common::ExpectedEquals;
 
@@ -35,7 +37,7 @@ fn create_transaction_test() -> Result<()> {
     let mut conn = context.manager.pg_connect_db(&context.db_name)?;
     let from_user = Uuid::new_v4();
     let to_user = Uuid::new_v4();
-    let charge_ids = vec![1,5,7];
+    let txn_charge_ids = vec![1,5,7];
     let amount = 300.;
     let expected_time = chrono::offset::Utc::now();
 
@@ -44,7 +46,7 @@ fn create_transaction_test() -> Result<()> {
         txn_time: expected_time,
         from_user: from_user.clone(),
         to_user: to_user.clone(),
-        charge_ids: Some(charge_ids.clone()),
+        charge_ids: Some(txn_charge_ids.clone()),
         amount,
     };
 
@@ -52,7 +54,7 @@ fn create_transaction_test() -> Result<()> {
         &mut conn,
         from_user.clone(),
         to_user.clone(),
-        Some(charge_ids.clone()),
+        Some(txn_charge_ids.clone()),
         amount,
         None,
     )?;
@@ -60,6 +62,50 @@ fn create_transaction_test() -> Result<()> {
 
     let retrieved = Transaction::retrieve(&mut conn, new_txn.transaction_id)?;
     assert_eq!(&retrieved, &new_txn);
+    Ok(())
+}
+
+#[test]
+fn create_txn_from_charges_test() -> Result<()> {
+    let context = common::TestContext::new("create_txn_from_charges")?;
+    let mut conn = context.manager.pg_connect_db(&context.db_name)?;
+    let from_user_id = Uuid::new_v4();
+    let charge_type = ChargeType::DataTransferInBytes;
+    let quantity1 = 2.5;
+    let rate1 = 3.4;
+    let report_ids = None;
+    let charge1 = NewCharge::new(
+        from_user_id,
+        charge_type,
+        quantity1,
+        rate1,
+        report_ids.clone()
+    ).commit(&mut conn)?;
+    let quantity2 = 5.3;
+    let rate2 = 1.8;
+    let charge2 = NewCharge::new(
+        from_user_id,
+        charge_type,
+        quantity2,
+        rate2,
+        report_ids.clone()
+    ).commit(&mut conn)?;
+    let expected_charge_ids = vec![charge1.charge_id, charge2.charge_id];
+    let charges = vec![charge1, charge2];
+    let to_user_id = Uuid::new_v4();
+    let transaction = NewTransaction::from_charges(
+        &mut conn,
+        charges,
+        from_user_id,
+        to_user_id,
+    )?;
+    let expected_amount = rate1*quantity1 + rate2*quantity2;
+    let now = chrono::offset::Utc::now();
+    assert!(transaction.txn_time.expected_equals(&now));
+    assert_eq!(transaction.charge_ids, Some(expected_charge_ids));
+    assert_eq!(&transaction.from_user, &from_user_id);
+    assert_eq!(transaction.amount, expected_amount);
+    assert_eq!(&transaction.to_user, &to_user_id);
     Ok(())
 }
 
