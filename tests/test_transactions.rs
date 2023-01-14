@@ -92,15 +92,15 @@ fn create_txn_from_charges_test() -> Result<()> {
     ).commit(&mut conn)?;
     let expected_charge_ids = vec![charge1.charge_id, charge2.charge_id];
     let charges = vec![charge1, charge2];
-    let to_user_id = Uuid::new_v4();
-    let transaction = NewTransaction::from_charges(
+    let to_user_id = Uuid::nil();
+    let transactions = NewTransaction::from_charges(
         &mut conn,
-        charges,
-        from_user_id,
-        to_user_id,
+        &charges,
     )?;
     let expected_amount = rate1*quantity1 + rate2*quantity2;
     let now = chrono::offset::Utc::now();
+    assert_eq!(transactions.len(), 1);
+    let transaction = &transactions[0];
     assert!(transaction.txn_time.expected_equals(&now));
     assert_eq!(transaction.charge_ids, Some(expected_charge_ids));
     assert_eq!(&transaction.from_user, &from_user_id);

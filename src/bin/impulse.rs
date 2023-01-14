@@ -1,13 +1,12 @@
-use std::collections::HashMap;
 use std::rc::Rc;
 use anyhow::Result;
 use clap::Parser;
 use log::info;
-use uuid::Uuid;
 use impulse::manage::ManagementConfig;
 use impulse::manage::postgres::PostgresManager;
 use impulse::models::charges::Charge;
-use impulse::models::reports::{Report, ReportToCharge};
+use impulse::models::reports::{ReportToCharge};
+use impulse::models::transactions::NewTransaction;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about=None)]
@@ -31,6 +30,10 @@ pub async fn main() -> Result<()> {
         let mut conn = manager.pg_connect_db(&db_name)?;
         let uncharged = ReportToCharge::uncharged(&mut conn)?;
         let charges = Charge::create_charges(&mut conn, uncharged)?;
+        let transactions = NewTransaction::from_charges(
+            &mut conn,
+            &charges
+        );
    }
     Ok(())
 }

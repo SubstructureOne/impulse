@@ -7,7 +7,7 @@ use diesel::debug_query;
 use diesel::pg::Pg;
 use log::{trace};
 use uuid::Uuid;
-use crate::models::reports::{PacketDirection, Report, ReportToCharge};
+use crate::models::reports::{PacketDirection, ReportToCharge};
 
 use crate::schema::charges;
 

@@ -94,6 +94,7 @@ impl PostgresManager {
         sql_query("REVOKE ALL ON pg_database FROM public;").execute(&mut conn)?;
         sql_query("REVOKE ALL ON pg_tablespace FROM public;").execute(&mut conn)?;
         sql_query("REVOKE ALL ON pg_settings FROM public;").execute(&mut conn)?;
+
         Ok(())
     }
 

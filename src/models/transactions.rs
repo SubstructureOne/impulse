@@ -1,6 +1,7 @@
 use anyhow::{Result};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
+use itertools::Itertools;
 use log::trace;
 use uuid::Uuid;
 use crate::models::charges::Charge;
@@ -153,23 +154,29 @@ impl NewTransaction {
 
     pub fn from_charges(
         conn: &mut PgConnection,
-        charges: Vec<Charge>,
-        from_user: Uuid,
-        to_user: Uuid,
-    ) -> Result<Transaction> {
-        let charge_ids = charges
+        charges: &Vec<Charge>
+    ) -> Result<Vec<Transaction>> {
+        let to_user = Uuid::nil();
+        let charge_groups = charges
             .iter()
-            .map(|charge| charge.charge_id)
-            .collect::<Vec<_>>();
-        trace!("Calling add_internal_transaction_from_reports PG function");
-        let txn_id = diesel::select(
-            functions::add_internal_transaction_from_reports(
-                &from_user,
-                &to_user,
-                &charge_ids,
-                -1.0  // FIXME
-            )
-        ).first::<i64>(conn)?;
-        Ok(Transaction::retrieve(conn, txn_id)?)
+            .into_group_map_by(|charge| charge.user_id);
+        let mut txns = vec![];
+        for (from_user, charge_group) in charge_groups {
+            let charge_ids = charge_group
+                .iter()
+                .map(|charge| charge.charge_id)
+                .collect::<Vec<_>>();
+            trace!("Calling add_internal_transaction_from_reports PG function");
+            let txn_id = diesel::select(
+                functions::add_internal_transaction_from_reports(
+                    &from_user,
+                    &to_user,
+                    &charge_ids,
+                    -1.0  // FIXME
+                )
+            ).first::<i64>(conn)?;
+            txns.push(Transaction::retrieve(conn, txn_id)?);
+        }
+        Ok(txns)
     }
 }

@@ -33,6 +33,12 @@ CREATE TABLE users (
 );
 SELECT diesel_manage_updated_at('users');
 
+-- for uuid_nil function
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- special user indicating the default payee
+INSERT INTO users (user_id, pg_name, status_synced)
+    VALUES (uuid_nil(), 'postgres', true);
+
 CREATE OR REPLACE FUNCTION add_external_deposit(
     IN to_user uuid,
     IN amount double precision,
@@ -112,7 +118,7 @@ BEGIN
         SET balance = balance + amount_transacted
         WHERE user_id = p_to_user;
     IF from_user_balance < p_disable_at THEN
-        UPDATE users SET user_status = 'Disabled' WHERE user_id = from_user;
+        UPDATE users SET user_status = 'Disabled' WHERE user_id = p_from_user;
     END IF;
     RETURN new_txn_id;
 END;
