@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use diesel::{debug_query, sql_query};
@@ -76,7 +76,7 @@ pub struct Charge {
     pub transacted: bool,
 }
 #[derive(QueryableByName, Debug)]
-pub struct LastTimeCharge {
+pub struct LastChargeTime {
     #[diesel(sql_type = crate::schema::sql_types::Chargetype)]
     pub charge_type: ChargeType,
     #[diesel(sql_type = diesel::sql_types::Timestamptz)]
@@ -119,50 +119,82 @@ impl Charge {
             .collect::<Result<Vec<Charge>>>()
     }
 
-    pub fn from_timecharges_for_user(conn: &mut PgConnection, user_id: &Uuid) -> Result<Vec<Charge>> {
+    pub fn from_timecharges_for_user(conn: &mut PgConnection, match_user_id: &Uuid) -> Result<Vec<Charge>> {
         let mut created_charges = vec![];
-        let last_time_charges = sql_query(r#"
+        // Data we need for this function:
+        //
+        //   1. the most recent charge (if it exists) corresponding to each
+        //      timecharge type
+        //   2. the most recent timecharge from *before* the most
+        //      recent charge, to charge the first period
+        //   3. all the timecharges (if any) created since the most recent
+        //      charge (if it exists), or else all timecharges (if it doesn't)
+        //   4. the most recent timecharge, to charge the last period
+        //
+        // 2 will either be identical to #4 (if there are no
+        // timecharges since the most recent charge), or it will be an
+        // element of #3.
+        //
+        // Obviously if there are no timecharges of a given type then there is
+        // no charge to be created for the corresponding ChargeType of that
+        // TimeChargeType.
+        let last_charges = sql_query(r#"
             SELECT charge_type, max(charge_time) as charge_time
             FROM charges
             WHERE user_id = $1
             GROUP BY charge_type
         "#)
-            .bind::<diesel::sql_types::Uuid,_>(user_id)
-            .load::<LastTimeCharge>(conn)?;
-        let mut last_time_map = last_time_charges
+            .bind::<diesel::sql_types::Uuid,_>(match_user_id)
+            .load::<LastChargeTime>(conn)?;
+        let last_charge_time_map = last_charges
             .iter()
-            .into_grouping_map_by(|timecharge| timecharge.charge_type)
-            .aggregate(|_acc, _key, val| Some(Some(val.charge_time)));
-        for charge_type in enum_iterator::all::<ChargeType>() {
-            last_time_map.entry(charge_type).or_insert(None);
-        }
-        for (match_charge_type, last_charge_time) in last_time_map {
+            .into_grouping_map_by(|chargetime| chargetime.charge_type)
+            .aggregate(|_acc, _key, val| Some(val.charge_time));
+        for match_timecharge_type in enum_iterator::all::<TimeChargeType>() {
             use schema::timecharges::dsl::*;
-            let option_timecharge_type: Option<TimeChargeType> = match_charge_type.into();
-            if let Some(match_timecharge_type) = option_timecharge_type {
-                let tc_query = timecharges
-                    .filter(timecharge_type.eq(match_timecharge_type))
-                    .order(timecharge_time.asc());
-                let tcs;
-                if let Some(prev_charge) = last_charge_time {
-                    tcs = tc_query
-                        .filter(timecharge_time.gt(prev_charge))
-                        .load::<TimeCharge>(conn)?;
-                } else {
-                    tcs = tc_query
-                        .load::<TimeCharge>(conn)?;
+            let mut opt_prev_charge_time = last_charge_time_map.get(&match_timecharge_type.into());
+            let tc_query = timecharges
+                .filter(user_id.eq(match_user_id))
+                .filter(timecharge_type.eq(match_timecharge_type))
+                .order(timecharge_time.asc());
+            let tcs: Vec<TimeCharge> = match opt_prev_charge_time {
+                Some(prev_charge) => tc_query
+                    .filter(timecharge_time.gt(prev_charge))
+                    .load::<TimeCharge>(conn)?,
+                None => tc_query.load::<TimeCharge>(conn)?,
+            };
+            let mut opt_prev_timecharge: Option<TimeCharge> = match opt_prev_charge_time {
+                Some(last_charge_time) => timecharges
+                    .filter(user_id.eq(match_user_id))
+                    .filter(timecharge_time.le(last_charge_time))
+                    .order(timecharge_time.desc())
+                    .first::<TimeCharge>(conn)
+                    .optional()?,
+                None => None
+            };
+            for tc in tcs.iter() {
+                if let (Some(prev_charge_time), Some(prev_timecharge))
+                    = (opt_prev_charge_time, opt_prev_timecharge)
+                {
+                    let new_charge = prev_timecharge
+                        .to_new_charge(prev_charge_time, &tc.timecharge_time)?
+                        .commit(conn)?;
+                    created_charges.push(new_charge);
                 }
-                let mut opt_prev_charge_time = last_charge_time;
-                for tc in tcs {
-                    if let Some(prev_charge_time) = opt_prev_charge_time {
-                        let new_charge = tc.to_new_charge(prev_charge_time).commit(conn)?;
-                        created_charges.push(new_charge);
-                    }
-                    opt_prev_charge_time = Some(tc.timecharge_time);
-                }
-                // FIXME: incomplete; need to charge final span from last timecharge to current time
+                opt_prev_charge_time = Some(&tc.timecharge_time);
+                opt_prev_timecharge = Some(tc.clone());
             }
-
+            // calculate final charge representing most recent timecharge to
+            // current time
+            if let (Some(last_charge_time), Some(last_timecharge))
+                = (opt_prev_charge_time, opt_prev_timecharge)
+            {
+                created_charges.push(
+                    last_timecharge
+                            .to_new_charge(last_charge_time, &Utc::now())?
+                            .commit(conn)?
+                );
+            }
         }
         Ok(created_charges)
     }
@@ -260,7 +292,7 @@ impl NewCharge {
     }
 }
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, Debug, Clone)]
 pub struct TimeCharge {
     pub timecharge_id: i64,
     pub timecharge_time: DateTime<Utc>,
@@ -269,18 +301,36 @@ pub struct TimeCharge {
     pub quantity: f64,
 }
 impl TimeCharge {
-    pub fn to_new_charge(&self, prev_charge_time: DateTime<Utc>) -> NewCharge {
-        // calculate in seconds, store a s horus
+    pub fn to_new_charge(
+        &self,
+        charge_starttime: &DateTime<Utc>,
+        charge_endtime: &DateTime<Utc>
+    ) -> Result<NewCharge> {
+        if charge_starttime < &self.timecharge_time {
+            return Err(anyhow!(
+                "Charge start time ({}) cannot be before timecharge time ({})",
+                &charge_starttime,
+                &self.timecharge_time
+            ));
+        }
+        if charge_endtime < charge_starttime {
+            return Err(anyhow!(
+                "Charge endtime ({}) cannot be before charge starttime ({})",
+                &charge_endtime,
+                &charge_starttime,
+            ))
+        }
+        // calculate in seconds, store as horus
         let charge_quantity =
             self.quantity
-                * (self.timecharge_time - prev_charge_time).num_seconds() as f64
+                * (*charge_endtime - *charge_starttime).num_seconds() as f64
                 / 3600.0;
-        NewCharge::new(
+        Ok(NewCharge::new(
             self.user_id.clone(),
             self.timecharge_type.into(),
             charge_quantity,
             1.0, // FIXME
             None
-        )
+        ))
     }
 }
