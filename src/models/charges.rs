@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::models::reports::{PacketDirection, ReportToCharge};
 use crate::schema;
 use crate::schema::charges;
+use crate::schema::timecharges;
 
 
 #[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Eq, Hash, Copy, Clone, Sequence)]
@@ -119,7 +120,11 @@ impl Charge {
             .collect::<Result<Vec<Charge>>>()
     }
 
-    pub fn from_timecharges_for_user(conn: &mut PgConnection, match_user_id: &Uuid) -> Result<Vec<Charge>> {
+    pub fn from_timecharges_for_user(
+        conn: &mut PgConnection,
+        match_user_id: &Uuid,
+        final_charge_time: Option<DateTime<Utc>>
+    ) -> Result<Vec<Charge>> {
         let mut created_charges = vec![];
         // Data we need for this function:
         //
@@ -177,7 +182,10 @@ impl Charge {
                     = (opt_prev_charge_time, opt_prev_timecharge)
                 {
                     let new_charge = prev_timecharge
-                        .to_new_charge(prev_charge_time, &tc.timecharge_time)?
+                        .to_new_charge(
+                            prev_charge_time,
+                            &tc.timecharge_time,
+                            final_charge_time)?
                         .commit(conn)?;
                     created_charges.push(new_charge);
                 }
@@ -191,7 +199,11 @@ impl Charge {
             {
                 created_charges.push(
                     last_timecharge
-                            .to_new_charge(last_charge_time, &Utc::now())?
+                            .to_new_charge(
+                                last_charge_time,
+                                &final_charge_time.unwrap_or(Utc::now()),
+                                final_charge_time,
+                            )?
                             .commit(conn)?
                 );
             }
@@ -216,7 +228,8 @@ impl Charge {
                         charge_type,
                         quantity: new_report.num_bytes.unwrap() as f64,
                         rate: 0.1, // FIXME
-                        report_ids: Some(vec![new_report.report_id])
+                        report_ids: Some(vec![new_report.report_id]),
+                        charge_time: None, // FIXME?
                     };
                     existing_charges.insert(charge_type, charge);
                 }
@@ -265,6 +278,7 @@ pub struct NewCharge {
     pub quantity: f64,
     pub rate: f64,
     pub report_ids: Option<Vec<i64>>,
+    pub charge_time: Option<DateTime<Utc>>,
 }
 
 impl NewCharge {
@@ -274,13 +288,15 @@ impl NewCharge {
         quantity: f64,
         rate: f64,
         report_ids: Option<Vec<i64>>,
+        charge_time: Option<DateTime<Utc>>,
     ) -> NewCharge {
         NewCharge {
             user_id,
             charge_type,
             quantity,
             rate,
-            report_ids
+            report_ids,
+            charge_time,
         }
     }
 
@@ -304,7 +320,8 @@ impl TimeCharge {
     pub fn to_new_charge(
         &self,
         charge_starttime: &DateTime<Utc>,
-        charge_endtime: &DateTime<Utc>
+        charge_endtime: &DateTime<Utc>,
+        charge_time: Option<DateTime<Utc>>,
     ) -> Result<NewCharge> {
         if charge_starttime < &self.timecharge_time {
             return Err(anyhow!(
@@ -330,7 +347,40 @@ impl TimeCharge {
             self.timecharge_type.into(),
             charge_quantity,
             1.0, // FIXME
-            None
+            None,
+            charge_time,
         ))
+    }
+}
+
+#[derive(Insertable, Debug)]
+#[diesel(table_name = timecharges)]
+pub struct NewTimeCharge {
+    pub user_id: Uuid,
+    pub timecharge_time: Option<DateTime<Utc>>,
+    pub timecharge_type: TimeChargeType,
+    pub quantity: f64,
+}
+impl NewTimeCharge {
+    pub fn create(
+        user_id: Uuid,
+        timecharge_time: Option<DateTime<Utc>>,
+        timecharge_type: TimeChargeType,
+        quantity: f64
+    ) -> NewTimeCharge {
+        NewTimeCharge {
+            user_id,
+            timecharge_time,
+            timecharge_type,
+            quantity
+        }
+    }
+
+    pub fn commit(&self, conn: &mut PgConnection) -> Result<TimeCharge> {
+        Ok(
+            diesel::insert_into(timecharges::table)
+                .values(self)
+                .get_result::<TimeCharge>(conn)?
+        )
     }
 }

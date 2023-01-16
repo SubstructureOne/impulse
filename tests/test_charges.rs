@@ -1,5 +1,6 @@
 use anyhow::{Result};
-use log::trace;
+use chrono::{DateTime, Duration, TimeZone, Utc};
+use log::{debug, trace};
 use uuid::Uuid;
 
 use impulse::models::charges::*;
@@ -52,6 +53,7 @@ fn create_charge_test() -> Result<()> {
         quantity,
         rate,
         report_ids.clone(),
+        None,
     ).commit(&mut conn)?;
     trace!("New charge: {:?}", &charge);
     assert!(charge.expected_equals(&expected_charge));
@@ -59,5 +61,74 @@ fn create_charge_test() -> Result<()> {
     let retrieved = Charge::retrieve(&mut conn, charge.charge_id)?;
     trace!("Retrieved charge: {:?}", &retrieved);
     assert_eq!(&charge, &retrieved);
+    Ok(())
+}
+
+#[test]
+fn create_from_timecharges_test() -> Result<()> {
+    let context = common::TestContext::new("create_from_timecharges")?;
+    let mut conn = context.manager.pg_connect_db(&context.db_name)?;
+    let user_id = Uuid::new_v4();
+
+    // situation 1: a single timecharge and no existing charges
+    let timecharge1_time = Utc.with_ymd_and_hms(2022, 1, 1, 12, 0, 0).unwrap();
+    let timecharge1_type = TimeChargeType::DataStorageBytes;
+    let quantity1 = 10.0;
+    let timecharge1 = NewTimeCharge::create(
+        user_id,
+        Some(timecharge1_time),
+        timecharge1_type,
+        quantity1
+    ).commit(&mut conn)?;
+    let charge1_time = timecharge1_time + Duration::minutes(10);
+    let created_charges1 = Charge::from_timecharges_for_user(
+        &mut conn,
+        &user_id,
+        Some(charge1_time),
+    )?;
+    assert_eq!(created_charges1.len(), 1);
+    let expected_quantity = quantity1 * (charge1_time - timecharge1_time).num_seconds() as f64 / 3600.0;
+    let created_charge1 = &created_charges1[0];
+    let expected_rate = 1.0; // FIXME
+    let expected_charge1 = Charge {
+        charge_id: 0,
+        charge_time: charge1_time,
+        user_id,
+        charge_type: ChargeType::DataStorageByteHours,
+        quantity: expected_quantity,
+        rate: expected_rate,
+        amount: expected_quantity * expected_rate,
+        report_ids: None,
+        transacted: false
+    };
+    debug!("Expecting {:?} to roughly equal {:?}", &created_charge1, &expected_charge1);
+    assert!(created_charge1.expected_equals(&expected_charge1));
+
+    // situation 2: one existing timecharge and an existing charge
+    let charge2_time = charge1_time + Duration::minutes(10);
+    let created_charges2 = Charge::from_timecharges_for_user(
+        &mut conn,
+        &user_id,
+        Some(charge2_time)
+    )?;
+    assert_eq!(created_charges2.len(), 1);
+    let created_charge2 = &created_charges2[0];
+    // note we use the same "quantity" here because we still have only 1
+    // TimeCharge (i.e., we had 10 bytes before and we still have 10 bytes
+    // now).
+    let expected_quantity2 = quantity1 * (charge2_time - charge1_time).num_seconds() as f64 / 3600.0;
+    let expected_charge2 = Charge {
+        charge_id: 0,
+        charge_time: charge2_time,
+        user_id,
+        charge_type: ChargeType::DataStorageByteHours,
+        quantity: expected_quantity2,
+        rate: expected_rate,
+        amount: expected_quantity2 * expected_rate,
+        report_ids: None,
+        transacted: false,
+    };
+    debug!("Expecting {:?} to roughly equal {:?}", &created_charge2, &expected_charge2);
+    assert!(created_charge2.expected_equals(&expected_charge2));
     Ok(())
 }

@@ -78,7 +78,8 @@ fn create_txn_from_charges_test() -> Result<()> {
         charge_type,
         quantity1,
         rate1,
-        report_ids.clone()
+        report_ids.clone(),
+        None,
     ).commit(&mut conn)?;
     let quantity2 = 5.3;
     let rate2 = 1.8;
@@ -87,7 +88,8 @@ fn create_txn_from_charges_test() -> Result<()> {
         charge_type,
         quantity2,
         rate2,
-        report_ids.clone()
+        report_ids.clone(),
+        None,
     ).commit(&mut conn)?;
     let expected_charge_ids = vec![charge1.charge_id, charge2.charge_id];
     let charges = vec![charge1, charge2];
