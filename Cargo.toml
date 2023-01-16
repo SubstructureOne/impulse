@@ -14,6 +14,7 @@ diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
 diesel_migrations = { version = "2.0.0", features = ["postgres"] }
 docker-api = "0.12.2"
 dotenvy = "0.15.6"
+enum-iterator = "1.2.0"
 env_logger = "0.10.0"
 itertools = "0.10.5"
 lazy_static = "1.4.0"

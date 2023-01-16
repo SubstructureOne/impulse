@@ -29,7 +29,7 @@ pub async fn main() -> Result<()> {
     if args.generate_charges {
         info!("Generating charges");
         let uncharged = ReportToCharge::uncharged(&mut conn)?;
-        let charges = Charge::create_charges(&mut conn, uncharged)?;
+        let charges = Charge::from_reports(&mut conn, uncharged)?;
         info!("Generated {} charges", charges.len());
     }
     if args.generate_transactions {

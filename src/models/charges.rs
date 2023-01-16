@@ -3,16 +3,19 @@ use std::collections::HashMap;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use diesel::debug_query;
+use diesel::{debug_query, sql_query};
 use diesel::pg::Pg;
+use enum_iterator::Sequence;
+use itertools::Itertools;
 use log::{trace};
 use uuid::Uuid;
-use crate::models::reports::{PacketDirection, ReportToCharge};
 
+use crate::models::reports::{PacketDirection, ReportToCharge};
+use crate::schema;
 use crate::schema::charges;
 
 
-#[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Eq, Hash, Copy, Clone)]
+#[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Eq, Hash, Copy, Clone, Sequence)]
 #[DieselTypePath = "crate::schema::sql_types::Chargetype"]
 #[DbValueStyle = "verbatim"]
 pub enum ChargeType {
@@ -20,14 +23,28 @@ pub enum ChargeType {
     DataTransferOutBytes,
     DataStorageByteHours,
 }
+impl From<TimeChargeType> for ChargeType {
+    fn from(timecharge_type: TimeChargeType) -> Self {
+        match timecharge_type {
+            TimeChargeType::DataStorageBytes => ChargeType::DataStorageByteHours
+        }
+    }
+}
 
-#[derive(diesel_derive_enum::DbEnum, Debug)]
+#[derive(diesel_derive_enum::DbEnum, Debug, Copy, Clone, Sequence)]
 #[DieselTypePath = "crate::schema::sql_types::Timechargetype"]
 #[DbValueStyle = "verbatim"]
 pub enum TimeChargeType {
     DataStorageBytes,
 }
-
+impl From<ChargeType> for Option<TimeChargeType> {
+    fn from(charge_type: ChargeType) -> Self {
+        match charge_type {
+            ChargeType::DataStorageByteHours => Some(TimeChargeType::DataStorageBytes),
+            _ => None,
+        }
+    }
+}
 
 // diesel translates "report_ids bigint[]" as "Nullable<Array<Nullable<Int8>>>"
 // since arrays in Postgres can contain NULL values. We prevent that by adding
@@ -58,6 +75,13 @@ pub struct Charge {
     pub report_ids: Option<Vec<i64>>,
     pub transacted: bool,
 }
+#[derive(QueryableByName, Debug)]
+pub struct LastTimeCharge {
+    #[diesel(sql_type = crate::schema::sql_types::Chargetype)]
+    pub charge_type: ChargeType,
+    #[diesel(sql_type = diesel::sql_types::Timestamptz)]
+    pub charge_time: DateTime<Utc>,
+}
 impl Charge {
     pub fn untransacted(conn: &mut PgConnection) -> Result<Vec<Charge>> {
         use crate::schema::charges::dsl::*;
@@ -80,7 +104,7 @@ impl Charge {
         )
     }
 
-    pub fn create_charges(conn: &mut PgConnection, reports: Vec<ReportToCharge>) -> Result<Vec<Charge>> {
+    pub fn from_reports(conn: &mut PgConnection, reports: Vec<ReportToCharge>) -> Result<Vec<Charge>> {
         let mut user2type2charge: HashMap<Option<Uuid>, HashMap<ChargeType, NewCharge>> = HashMap::new();
         for report in reports {
             let type2charge = user2type2charge
@@ -93,6 +117,54 @@ impl Charge {
             .flat_map(|hashmap| hashmap.values())
             .map(|new_charge| new_charge.commit(conn))
             .collect::<Result<Vec<Charge>>>()
+    }
+
+    pub fn from_timecharges_for_user(conn: &mut PgConnection, user_id: &Uuid) -> Result<Vec<Charge>> {
+        let mut created_charges = vec![];
+        let last_time_charges = sql_query(r#"
+            SELECT charge_type, max(charge_time) as charge_time
+            FROM charges
+            WHERE user_id = $1
+            GROUP BY charge_type
+        "#)
+            .bind::<diesel::sql_types::Uuid,_>(user_id)
+            .load::<LastTimeCharge>(conn)?;
+        let mut last_time_map = last_time_charges
+            .iter()
+            .into_grouping_map_by(|timecharge| timecharge.charge_type)
+            .aggregate(|_acc, _key, val| Some(Some(val.charge_time)));
+        for charge_type in enum_iterator::all::<ChargeType>() {
+            last_time_map.entry(charge_type).or_insert(None);
+        }
+        for (match_charge_type, last_charge_time) in last_time_map {
+            use schema::timecharges::dsl::*;
+            let option_timecharge_type: Option<TimeChargeType> = match_charge_type.into();
+            if let Some(match_timecharge_type) = option_timecharge_type {
+                let tc_query = timecharges
+                    .filter(timecharge_type.eq(match_timecharge_type))
+                    .order(timecharge_time.asc());
+                let tcs;
+                if let Some(prev_charge) = last_charge_time {
+                    tcs = tc_query
+                        .filter(timecharge_time.gt(prev_charge))
+                        .load::<TimeCharge>(conn)?;
+                } else {
+                    tcs = tc_query
+                        .load::<TimeCharge>(conn)?;
+                }
+                let mut opt_prev_charge_time = last_charge_time;
+                for tc in tcs {
+                    if let Some(prev_charge_time) = opt_prev_charge_time {
+                        let new_charge = tc.to_new_charge(prev_charge_time).commit(conn)?;
+                        created_charges.push(new_charge);
+                    }
+                    opt_prev_charge_time = Some(tc.timecharge_time);
+                }
+                // FIXME: incomplete; need to charge final span from last timecharge to current time
+            }
+
+        }
+        Ok(created_charges)
     }
 
     fn append_report(existing_charges: &mut HashMap<ChargeType, NewCharge>, new_report: &ReportToCharge) {
@@ -194,5 +266,21 @@ pub struct TimeCharge {
     pub timecharge_time: DateTime<Utc>,
     pub user_id: Uuid,
     pub timecharge_type: TimeChargeType,
-    pub amount: f64,
+    pub quantity: f64,
+}
+impl TimeCharge {
+    pub fn to_new_charge(&self, prev_charge_time: DateTime<Utc>) -> NewCharge {
+        // calculate in seconds, store a s horus
+        let charge_quantity =
+            self.quantity
+                * (self.timecharge_time - prev_charge_time).num_seconds() as f64
+                / 3600.0;
+        NewCharge::new(
+            self.user_id.clone(),
+            self.timecharge_type.into(),
+            charge_quantity,
+            1.0, // FIXME
+            None
+        )
+    }
 }

@@ -6,7 +6,6 @@ use impulse::models::charges::{ChargeType, NewCharge};
 
 use impulse::models::transactions::*;
 use impulse::models::transactions::NewTransaction;
-use impulse::schema::transactions::charge_ids;
 
 use crate::common::ExpectedEquals;
 

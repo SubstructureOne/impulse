@@ -124,6 +124,21 @@ BEGIN
 END;
 $BODY$;
 
+-- CREATE OR REPLACE FUNCTION create_charges_from_timecharges(
+--     p_userid uuid
+-- )
+--     RETURNS SETOF bigint
+--     LANGUAGE plpgsql
+-- AS $BODY$
+-- DECLARE
+--     v_starttime timestamptz;
+-- BEGIN
+--     SELECT charge_time INTO v_starttime FROM charges
+--         WHERE user_id = p_userid
+--         AND charge_type = 'TimeCharge'
+-- END;
+-- $BODY$;
+
 CREATE OR REPLACE VIEW reports_to_charge AS
     SELECT packet_id as report_id, user_id, packet_type, direction, length(packet_bytes) as num_bytes FROM reports r
     LEFT OUTER JOIN users u ON u.pg_name = r.username
