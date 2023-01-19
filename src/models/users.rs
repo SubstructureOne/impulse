@@ -37,6 +37,12 @@ impl User {
         )
     }
 
+    pub fn all(conn: &mut PgConnection) -> Result<Vec<User>>
+    {
+        use crate::schema::users::dsl::*;
+        Ok(users.load::<User>(conn)?)
+    }
+
     pub fn disable(&mut self, conn: &mut PgConnection) -> Result<()> {
         use crate::schema::users::dsl::*;
         let result = diesel::update(users.filter(user_id.eq(&self.user_id)))

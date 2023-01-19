@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::rc::Rc;
 use anyhow::{anyhow, Result};
@@ -5,8 +6,10 @@ use diesel::prelude::*;
 use diesel::sql_query;
 use diesel::sql_types::Text;
 use log::{error, info, trace};
+use uuid::Uuid;
 
 use crate::manage::ManagementConfig;
+use crate::models::users::User;
 
 sql_function!(
     fn create_pg_user(p_username: Text, p_password: Text);
@@ -14,6 +17,7 @@ sql_function!(
 sql_function!(
     fn drop_pg_user(p_username: Text);
 );
+const DB_SEPARATOR: &str = "_";
 
 pub struct PostgresManager {
     pub config: Rc<ManagementConfig>,
@@ -66,6 +70,14 @@ impl PostgresManager {
 pub struct PgUserInfo {
     pub username: String,
     pub password: String,
+}
+
+#[derive(QueryableByName, Debug)]
+pub struct PgDatabaseSize {
+    #[diesel(sql_type = diesel::sql_types::Text)]
+    pub db_name: String,
+    #[diesel(sql_type = diesel::sql_types::BigInt)]
+    pub db_bytes: i64,
 }
 
 impl PostgresManager {
@@ -192,6 +204,28 @@ impl PostgresManager {
         );
         query.execute(&mut conn)?;
         Ok(())
+    }
+
+    pub fn compute_storage(&self) -> Result<HashMap<Uuid, i64>> {
+        let mut conn = self.pg_connect()?;
+        let mut result: HashMap<Uuid, i64> = HashMap::new();
+        let db_sizes = sql_query(
+            "SELECT datname, pg_database_size(datname) FROM pg_database"
+        ).load::<PgDatabaseSize>(&mut conn)?;
+        let name2uuid = User::all(&mut conn)?
+            .iter()
+            .map(|user| (user.pg_name.clone(), user.user_id))
+            .into_iter()
+            .collect::<HashMap<_,_>>();
+        for db_size in db_sizes {
+            if let Some(pg_name_index) = db_size.db_name.rfind(DB_SEPARATOR) {
+                let pg_name = &db_size.db_name[pg_name_index+1..];
+                if let Some(user_id) = name2uuid.get(pg_name) {
+                    *result.entry(*user_id).or_insert(0) += db_size.db_bytes;
+                }
+            }
+        }
+        Ok(result)
     }
 
     // pub fn disable_pg_user(&self, user_id: &Uuid) -> Result<()> {
