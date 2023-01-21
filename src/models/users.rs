@@ -43,10 +43,32 @@ impl User {
         Ok(users.load::<User>(conn)?)
     }
 
+    pub fn unsynced(conn: &mut PgConnection) -> Result<Vec<User>>
+    {
+        use crate::schema::users::dsl::*;
+        Ok(
+            users
+                .filter(status_synced).eq(false)
+                .load::<User>(conn)?
+        )
+    }
+
     pub fn disable(&mut self, conn: &mut PgConnection) -> Result<()> {
         use crate::schema::users::dsl::*;
-        let result = diesel::update(users.filter(user_id.eq(&self.user_id)))
-            .set(user_status.eq(UserStatus::Disabled))
+        let result = diesel::update(users.find(user_id.eq(&self.user_id)))
+            .set((
+                     user_status.eq(UserStatus::Disabled),
+                    status_synced.eq(false)
+            ))
+            .get_result::<User>(conn)?;
+        *self = result;
+        Ok(())
+    }
+
+    pub fn mark_synced(&mut self, conn: &mut PgConnection) -> Result<()> {
+        use crate::schema::users::dsl::*;
+        let result = diesel::update(users.find(user_id.eq(&self.user_id)))
+            .set(status_synced.eq(true))
             .get_result::<User>(conn)?;
         *self = result;
         Ok(())

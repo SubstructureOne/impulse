@@ -33,6 +33,8 @@ CREATE TABLE users (
 );
 SELECT diesel_manage_updated_at('users');
 
+CREATE INDEX users_unsynced_index ON users (user_id) WHERE NOT status_synced;
+
 -- for uuid_nil function
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- special user indicating the default payee
@@ -124,20 +126,6 @@ BEGIN
 END;
 $BODY$;
 
--- CREATE OR REPLACE FUNCTION create_charges_from_timecharges(
---     p_userid uuid
--- )
---     RETURNS SETOF bigint
---     LANGUAGE plpgsql
--- AS $BODY$
--- DECLARE
---     v_starttime timestamptz;
--- BEGIN
---     SELECT charge_time INTO v_starttime FROM charges
---         WHERE user_id = p_userid
---         AND charge_type = 'TimeCharge'
--- END;
--- $BODY$;
 
 CREATE OR REPLACE VIEW reports_to_charge AS
     SELECT packet_id as report_id, user_id, packet_type, direction, length(packet_bytes) as num_bytes FROM reports r

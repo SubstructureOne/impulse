@@ -30,10 +30,10 @@ impl ManagementConfig {
     pub fn from_env() -> Result<ManagementConfig> {
         Ok(
             ManagementConfig {
-                pg_host: std::env::var("DB_HOST")?,
-                pg_port: std::env::var("DB_PORT")?.parse::<u32>()?,
-                pg_user: std::env::var("DB_USER")?,
-                pg_pw: std::env::var("DB_PASSWORD")?,
+                pg_host: std::env::var("MANAGED_DB_HOST")?,
+                pg_port: std::env::var("MANAGED_DB_PORT")?.parse::<u32>()?,
+                pg_user: std::env::var("MANAGED_DB_USER")?,
+                pg_pw: std::env::var("MANAGED_DB_PASSWORD")?,
             }
         )
     }

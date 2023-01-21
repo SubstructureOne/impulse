@@ -3,6 +3,7 @@ use std::rc::Rc;
 use anyhow::Result;
 use chrono::Utc;
 use clap::Parser;
+use diesel::PgConnection;
 use log::{debug, info, trace};
 
 use super::ManagementConfig;
@@ -10,7 +11,7 @@ use super::postgres::PostgresManager;
 use crate::models::charges::{Charge, NewTimeCharge, TimeChargeType};
 use crate::models::reports::{ReportToCharge};
 use crate::models::transactions::NewTransaction;
-use crate::models::users::User;
+use crate::models::users::{User, UserStatus};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about=None)]
@@ -64,8 +65,7 @@ pub async fn impulse(args: &ImpulseArgs) -> Result<()> {
         // created multiplied by the time delta between the timecharge creation
         // and the charge creation.
         info!("Computing user storage");
-        let config = Rc::new(ManagementConfig::from_env()?);
-        let manager = PostgresManager::new(config.clone());
+        let manager = managed_db_manager()?;
         let user2bytes = manager.compute_storage()?;
         // use a single timestamp for all timecharges for simpler querying
         let timecharge_time = Utc::now();
@@ -81,4 +81,24 @@ pub async fn impulse(args: &ImpulseArgs) -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn sync_users(impulse_conn: &mut PgConnection) -> Result<()> {
+    let unsynced = User::unsynced(impulse_conn)?;
+    let manager = managed_db_manager()?;
+    for mut user in unsynced {
+        match user.user_status {
+            UserStatus::Active => manager.enable_pg_user(&user.pg_name)?,
+            UserStatus::Disabled => manager.disable_pg_user(&user.pg_name)?,
+            // FIXME: spec out user deletion
+            UserStatus::Deleted => {}
+        }
+        user.mark_synced(impulse_conn)?;
+    }
+    Ok(())
+}
+
+fn managed_db_manager() -> Result<PostgresManager> {
+    let config = Rc::new(ManagementConfig::from_env()?);
+    Ok(PostgresManager::new(config.clone()))
 }
