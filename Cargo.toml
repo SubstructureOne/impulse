@@ -33,5 +33,5 @@ path = "src/lib.rs"
 
 
 [[bin]]
-name = "show_reports"
-path = "src/bin/show_reports.rs"
+name = "impulse"
+path = "src/bin/impulse.rs"

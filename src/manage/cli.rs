@@ -25,19 +25,15 @@ pub struct ImpulseArgs {
     compute_storage: bool,
 }
 
-#[tokio::main]
 pub async fn impulse(args: &ImpulseArgs) -> Result<()> {
-    let db_name = std::env::var("DB_NAME")?;
-    let config = Rc::new(ManagementConfig::from_env()?);
-    let manager = PostgresManager::new(config.clone());
-    let mut conn = manager.pg_connect_db(&db_name)?;
+    let mut impulse_conn = crate::connect_impulse_db()?;
 
     if args.process_timecharges {
         info!("Processing time charges");
         let mut count = 0;
-        for user in User::all(&mut conn)? {
+        for user in User::all(&mut impulse_conn)? {
             let charges = Charge::from_timecharges_for_user(
-                &mut conn,
+                &mut impulse_conn,
                 &user.user_id,
                 None,
             )?;
@@ -48,15 +44,15 @@ pub async fn impulse(args: &ImpulseArgs) -> Result<()> {
     }
     if args.generate_charges {
         info!("Generating charges from reports");
-        let uncharged = ReportToCharge::uncharged(&mut conn)?;
-        let charges = Charge::from_reports(&mut conn, uncharged)?;
+        let uncharged = ReportToCharge::uncharged(&mut impulse_conn)?;
+        let charges = Charge::from_reports(&mut impulse_conn, uncharged)?;
         info!("Generated {} charges", charges.len());
     }
     if args.generate_transactions {
         info!("Generating transactions");
-        let charges = Charge::untransacted(&mut conn)?;
+        let charges = Charge::untransacted(&mut impulse_conn)?;
         let transactions = NewTransaction::from_charges(
-            &mut conn,
+            &mut impulse_conn,
             &charges
         )?;
         info!("Generated {} transactions", transactions.len());
@@ -68,6 +64,8 @@ pub async fn impulse(args: &ImpulseArgs) -> Result<()> {
         // created multiplied by the time delta between the timecharge creation
         // and the charge creation.
         info!("Computing user storage");
+        let config = Rc::new(ManagementConfig::from_env()?);
+        let manager = PostgresManager::new(config.clone());
         let user2bytes = manager.compute_storage()?;
         // use a single timestamp for all timecharges for simpler querying
         let timecharge_time = Utc::now();
@@ -78,7 +76,7 @@ pub async fn impulse(args: &ImpulseArgs) -> Result<()> {
                 Some(timecharge_time),
                 TimeChargeType::DataStorageBytes,
                 quantity_bytes as f64,
-            ).commit(&mut conn)?;
+            ).commit(&mut impulse_conn)?;
             trace!("Created timecharge: {:?}", &timecharge);
         }
     }

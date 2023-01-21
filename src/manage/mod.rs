@@ -2,6 +2,7 @@ use anyhow::Result;
 
 pub mod postgres;
 pub mod cli;
+pub mod container;
 
 #[derive(Debug)]
 pub struct ManagementConfig {

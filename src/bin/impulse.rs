@@ -9,6 +9,6 @@ pub async fn main() -> Result<()> {
     env_logger::init();
     dotenvy::dotenv().ok();
     let args = cli::ImpulseArgs::parse();
-    cli::impulse(&args)?;
+    cli::impulse(&args).await?;
     Ok(())
 }

@@ -33,7 +33,7 @@ impl ExpectedEquals for ExtTransaction {
 #[test]
 fn create_transaction_test() -> Result<()> {
     let context = common::TestContext::new("create_txn")?;
-    let mut conn = context.manager.pg_connect_db(&context.db_name)?;
+    let mut conn = context.impulse_manager.pg_connect_db(&context.db_name)?;
     let from_user = Uuid::new_v4();
     let to_user = Uuid::new_v4();
     let txn_charge_ids = vec![1,5,7];
@@ -67,7 +67,7 @@ fn create_transaction_test() -> Result<()> {
 #[test]
 fn create_txn_from_charges_test() -> Result<()> {
     let context = common::TestContext::new("create_txn_from_charges")?;
-    let mut conn = context.manager.pg_connect_db(&context.db_name)?;
+    let mut conn = context.impulse_manager.pg_connect_db(&context.db_name)?;
     let from_user_id = Uuid::new_v4();
     let charge_type = ChargeType::DataTransferInBytes;
     let quantity1 = 2.5;
@@ -113,7 +113,7 @@ fn create_txn_from_charges_test() -> Result<()> {
 #[test]
 fn create_exttransaction_test() -> Result<()> {
     let context = common::TestContext::new("create_exttransaction")?;
-    let mut conn = context.manager.pg_connect_db(&context.db_name)?;
+    let mut conn = context.impulse_manager.pg_connect_db(&context.db_name)?;
     let user_id = Uuid::new_v4();
     let amount = 154.3;
     let expected_txn = ExtTransaction {

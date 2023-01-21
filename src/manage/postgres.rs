@@ -149,6 +149,7 @@ impl PostgresManager {
                     return Err(anyhow!(err))
                 }
                 trace!("{} rows affected", row_count.unwrap());
+                // FIXME: this shouldn't be necessary given changes to template1
                 trace!("Revoking public permissions on new database: {}", username);
                 let row_count = sql_query(
                     format!("REVOKE ALL ON DATABASE \"{}\" FROM public", username)

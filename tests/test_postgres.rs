@@ -29,21 +29,17 @@ impl<'a> PgUserManager<'a> {
 #[test]
 pub fn user_creation_test() -> Result<()> {
     let context = common::TestContext::new("postgres_test")?;
-    let manager = PostgresManager::new(context.config.clone());
     let username = "testuser";
-    let user_manager = PgUserManager::new(&manager, username);
+    let managed_db_manager = &context.managed_db_manager;
+    let user_manager = PgUserManager::new(
+        &managed_db_manager,
+        username
+    );
     user_manager.with(|| {
-        let info = manager.create_pg_user_and_database(username)?;
+        let info = managed_db_manager.create_pg_user_and_database(username)?;
         info!("User {} created with password {}", &info.username, &info.password);
-        // let user_pguri = format!(
-        //     "postgres://{}:{}@localhost:{}/{}",
-        //     &info.username,
-        //     &info.password,
-        //     port,
-        //     &info.username
-        // );
-        debug!("Testing that user can connect to their database ({})", &manager);
-        let user_config = Rc::new(manager.with_user(username, &info.password));
+        debug!("Testing that user can connect to their database ({})", &managed_db_manager);
+        let user_config = Rc::new(managed_db_manager.with_user(username, &info.password));
         let user_conn_mgr = PostgresManager::new(user_config.clone());
         let mut user_conn = user_conn_mgr.pg_connect_db(username)?;
         debug!("Testing that user can create tables");
@@ -65,7 +61,7 @@ pub fn user_creation_test() -> Result<()> {
         // manager scope, because the newly created database has the new
         // user defined as its owner, so the database must be dropped
         // before the user is dropped
-        manager.drop_pg_user(username)?;
+        managed_db_manager.drop_pg_user(username)?;
         Ok(())
     })?;
     info!("User {} dropped", username);

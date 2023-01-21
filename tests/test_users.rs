@@ -20,7 +20,7 @@ impl ExpectedEquals for User {
 #[test]
 pub fn create_user_test() -> Result<()> {
     let context = common::TestContext::new("create_user")?;
-    let mut conn = context.manager.pg_connect_db(&context.db_name)?;
+    let mut conn = context.impulse_manager.pg_connect_db(&context.db_name)?;
     let user_id = Uuid::new_v4();
     let pg_name = "myusertest";
     let balance = 3.35;
@@ -49,7 +49,7 @@ pub fn create_user_test() -> Result<()> {
 #[test]
 pub fn disable_user_test() -> Result<()> {
     let context = common::TestContext::new("disable_user")?;
-    let mut conn = context.manager.pg_connect_db(&context.db_name)?;
+    let mut conn = context.impulse_manager.pg_connect_db(&context.db_name)?;
     let mut user = NewUser::create(
         &mut conn,
         Uuid::new_v4(),

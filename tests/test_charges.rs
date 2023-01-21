@@ -1,5 +1,5 @@
 use anyhow::{Result};
-use chrono::{DateTime, Duration, TimeZone, Utc};
+use chrono::{Duration, TimeZone, Utc};
 use log::{debug, trace};
 use uuid::Uuid;
 
@@ -27,7 +27,7 @@ impl ExpectedEquals for Charge {
 fn create_charge_test() -> Result<()> {
     log::info!("Starting test");
     let context = common::TestContext::new("create_charge")?;
-    let mut conn = context.manager.pg_connect_db(&context.db_name)?;
+    let mut conn = context.impulse_manager.pg_connect_db(&context.db_name)?;
     let user_id = Uuid::new_v4();
     let quantity = 1024.;
     let rate = 0.00015;
@@ -67,7 +67,7 @@ fn create_charge_test() -> Result<()> {
 #[test]
 fn create_from_timecharges_test() -> Result<()> {
     let context = common::TestContext::new("create_from_timecharges")?;
-    let mut conn = context.manager.pg_connect_db(&context.db_name)?;
+    let mut conn = context.impulse_manager.pg_connect_db(&context.db_name)?;
     let user_id = Uuid::new_v4();
 
     // situation 1: a single timecharge and no existing charges

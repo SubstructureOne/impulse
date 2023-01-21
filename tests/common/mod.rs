@@ -61,44 +61,56 @@ lazy_static! {
 // }
 
 pub struct TestContext {
-    pub config: Rc<ManagementConfig>,
-    pub manager: PostgresManager,
+    pub impulse_config: Rc<ManagementConfig>,
+    pub impulse_manager: PostgresManager,
+    pub managed_db_manager: PostgresManager,
     pub db_name: String,
 }
 
 impl TestContext {
     pub fn new(db_name: &str) -> Result<Self> {
         // let postgres_url = &PG_CONTAINER.get().await.base_url;
-        let config = Rc::new(ManagementConfig::new(
+        let impulse_config = Rc::new(ManagementConfig::new(
             ENV.get("TESTING_DB_HOST").expect("Must specify TESTING_DB_HOST"),
             ENV.get("TESTING_DB_PORT").expect("Must specify TESTING_DB_PORT").parse::<u32>()?,
             ENV.get("TESTING_DB_USER").expect("Must specify TESTING_DB_USER"),
             ENV.get("TESTING_DB_PASSWORD").expect("Must specify TESTING_DB_PASSWORD"),
         ));
-        let manager = PostgresManager::new(config.clone());
-        info!("Testing environment: {}", manager);
-        let mut conn = manager.pg_connect()?;
+        let impulse_manager = PostgresManager::new(impulse_config.clone());
+        info!("Testing environment (impulse database): {}", &impulse_manager);
+        let managed_db_config = Rc::new(ManagementConfig::new(
+            ENV.get("MANAGED_DB_HOST").expect("Must specify MANAGED_DB_HOST"),
+            ENV.get("MANAGED_DB_PORT").expect("Must specify MANAGED_DB_PORT").parse::<u32>()?,
+            ENV.get("MANAGED_DB_USER").expect("Must specify MANAGED_DB_USER"),
+            ENV.get("MANAGED_DB_PASSWORD").expect("Must specify MANAGED_DB_PASSWORD"),
+        ));
+        let managed_db_manager = PostgresManager::new(managed_db_config.clone());
+        info!("Testing environment (managed database): {}", &managed_db_manager);
 
+        let mut impulse_conn = impulse_manager.pg_connect()?;
         let db_name = DB_PREFIX.to_string() + db_name;
         info!("Creating database {}", db_name);
         let query = diesel::sql_query(format!(r#"CREATE DATABASE "{}""#, &db_name));
-        query.execute(&mut conn)?;
+        query.execute(&mut impulse_conn)?;
 
         info!("Running migrations on {}", db_name);
-        let mut conn = manager.pg_connect_db(&db_name)?;
+        let mut conn = impulse_manager.pg_connect_db(&db_name)?;
         conn.run_pending_migrations(MIGRATIONS).unwrap();
 
         Ok(
             TestContext {
-                config,
-                manager,
+                impulse_config,
+                impulse_manager,
+                managed_db_manager,
                 db_name,
             }
         )
     }
 
     fn drop_database(&self) -> Result<()> {
-        self.manager.drop_database(&self.db_name)?;
+        // any changes made to the managed database are expected to be rolled
+        // back by the test itself.
+        self.impulse_manager.drop_database(&self.db_name)?;
         Ok(())
     }
 }
@@ -114,12 +126,6 @@ impl Drop for TestContext {
         }
     }
 }
-
-// impl std::fmt::Display for TestContext {
-//     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-//         write!(f, "{}", self.create_uri())
-//     }
-// }
 
 /// Implement a "soft equality" between two items.
 ///

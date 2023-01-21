@@ -8,7 +8,7 @@ mod common;
 #[test]
 fn create_report_test() -> Result<()> {
     let context = common::TestContext::new("create_report")?;
-    let mut conn = context.manager.pg_connect_db(&context.db_name)?;
+    let mut conn = context.impulse_manager.pg_connect_db(&context.db_name)?;
     let username = Some("MyUser".to_string());
     let packet_type = PostgresqlPacketType::Other;
     let direction = Some(PacketDirection::Backward);
