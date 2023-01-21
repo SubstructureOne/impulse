@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::rc::Rc;
+
 use anyhow::{anyhow, Result};
 use diesel::prelude::*;
 use diesel::sql_query;
 use diesel::sql_types::Text;
+use lazy_static::lazy_static;
 use log::{error, info, trace};
+use regex::Regex;
 use uuid::Uuid;
 
 use crate::manage::ManagementConfig;
@@ -112,10 +115,7 @@ impl PostgresManager {
 
     pub fn create_pg_user_and_database(&self, username: &str) -> Result<PgUserInfo> {
         // enforce strict naming conventions to prevent SQL injection
-        let name_regex = regex::Regex::new(r"^[0-9a-zA-Z\.]+$")?;
-        if !name_regex.is_match(username) {
-            return Err(anyhow!("Illegal username: {}", username));
-        }
+        Self::validate_identifier(username)?;
         let mut conn = self.pg_connect()?;
         let password_gen = passwords::PasswordGenerator::new()
             .length(16)
@@ -171,6 +171,7 @@ impl PostgresManager {
     }
 
     pub fn drop_pg_user(&self, username: &str) -> Result<()> {
+        Self::validate_identifier(username)?;
         let mut conn = self.pg_connect()?;
         trace!("Dropping user database '{}'", username);
         self.drop_database(username)?;
@@ -190,6 +191,7 @@ impl PostgresManager {
 
     pub fn drop_database(&self, database_name: &str) -> Result<()> {
         // TODO: just use DROP DATABASE WITH FORCE
+        Self::validate_identifier(database_name)?;
         let mut conn = self.pg_connect()?;
         info!("Force disconnecting any users connected to {}", &database_name);
         let count = sql_query(
@@ -229,7 +231,55 @@ impl PostgresManager {
         Ok(result)
     }
 
-    // pub fn disable_pg_user(&self, user_id: &Uuid) -> Result<()> {
-    //     Ok(())
-    // }
+    pub fn disable_pg_user(&self, pg_username: &str) -> Result<()> {
+        Self::validate_identifier(pg_username)?;
+        let mut conn = self.pg_connect()?;
+        sql_query(format!(r#"ALTER ROLE "{}" WITH NOLOGIN"#, pg_username))
+            .execute(&mut conn)?;
+        Ok(())
+    }
+
+    pub fn enable_pg_user(&self, pg_username: &str) -> Result<()> {
+        Self::validate_identifier(pg_username)?;
+        let mut conn = self.pg_connect()?;
+        sql_query(format!(r#"ALTER ROLE "{}" WITH LOGIN"#, pg_username))
+            .execute(&mut conn)?;
+        Ok(())
+    }
+
+    fn validate_identifier(identifier: &str) -> Result<()> {
+        // We always quote user-provided identifiers so almost any character
+        // string is valid by Postgres standards, but enforce much stricter
+        // requirements to avoid the need for careful quoting.
+        // We can rely on Postgres functions and parameters to avoid the need
+        // for quoting in some cases, but for others we can't (for example,
+        // "DROP DATABASE" cannot be in a function because it cannot be part
+        // of a transaction, and identifiers cannot be passed in as parameters.
+        lazy_static! {
+            static ref RE: Regex = regex::Regex::new(r"^[a-zA-Z0-9_\-\.]+$").unwrap();
+        }
+        match RE.is_match(identifier) {
+            true => Ok(()),
+            false => Err(anyhow!("Invalid character in identifier: {}", identifier)),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_identifier() -> Result<()> {
+        assert!(PostgresManager::validate_identifier("abcd").is_ok());
+        assert!(PostgresManager::validate_identifier("abCd").is_ok());
+        assert!(PostgresManager::validate_identifier("abC3d").is_ok());
+        assert!(PostgresManager::validate_identifier("0abCd").is_ok());
+        assert!(PostgresManager::validate_identifier(r#"with"quote"#).is_err());
+        assert!(PostgresManager::validate_identifier("with'quote").is_err());
+        assert!(PostgresManager::validate_identifier("ab\nCd").is_err());
+        assert!(PostgresManager::validate_identifier("abCd\\").is_err());
+        assert!(PostgresManager::validate_identifier("").is_err());
+        Ok(())
+    }
 }
