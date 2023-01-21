@@ -16,14 +16,16 @@ use crate::models::users::{User, UserStatus};
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about=None)]
 pub struct ImpulseArgs {
-    #[arg(short, long)]
+    #[arg(short='c', long)]
     generate_charges: bool,
-    #[arg(short, long)]
+    #[arg(short='t', long)]
     generate_transactions: bool,
     #[arg(short, long)]
     process_timecharges: bool,
     #[arg(short, long)]
     compute_storage: bool,
+    #[arg(short, long)]
+    sync_users: bool,
 }
 
 pub async fn impulse(args: &ImpulseArgs) -> Result<()> {
@@ -80,10 +82,15 @@ pub async fn impulse(args: &ImpulseArgs) -> Result<()> {
             trace!("Created timecharge: {:?}", &timecharge);
         }
     }
+    if args.sync_users {
+        info!("Syncing user status");
+        let synced_count = sync_users(&mut impulse_conn)?;
+        info!("{} users synced", synced_count);
+    }
     Ok(())
 }
 
-fn sync_users(impulse_conn: &mut PgConnection) -> Result<()> {
+fn sync_users(impulse_conn: &mut PgConnection) -> Result<usize> {
     let unsynced = User::unsynced(impulse_conn)?;
     let manager = managed_db_manager()?;
     for mut user in unsynced {
@@ -95,7 +102,7 @@ fn sync_users(impulse_conn: &mut PgConnection) -> Result<()> {
         }
         user.mark_synced(impulse_conn)?;
     }
-    Ok(())
+    Ok(unsynced.len())
 }
 
 fn managed_db_manager() -> Result<PostgresManager> {
