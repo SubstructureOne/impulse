@@ -48,14 +48,14 @@ impl User {
         use crate::schema::users::dsl::*;
         Ok(
             users
-                .filter(status_synced).eq(false)
+                .filter(status_synced.eq(false))
                 .load::<User>(conn)?
         )
     }
 
     pub fn disable(&mut self, conn: &mut PgConnection) -> Result<()> {
         use crate::schema::users::dsl::*;
-        let result = diesel::update(users.find(user_id.eq(&self.user_id)))
+        let result = diesel::update(users.find(&self.user_id))
             .set((
                      user_status.eq(UserStatus::Disabled),
                     status_synced.eq(false)
@@ -67,7 +67,7 @@ impl User {
 
     pub fn mark_synced(&mut self, conn: &mut PgConnection) -> Result<()> {
         use crate::schema::users::dsl::*;
-        let result = diesel::update(users.find(user_id.eq(&self.user_id)))
+        let result = diesel::update(users.find(&self.user_id))
             .set(status_synced.eq(true))
             .get_result::<User>(conn)?;
         *self = result;

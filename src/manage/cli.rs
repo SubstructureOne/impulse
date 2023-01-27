@@ -93,6 +93,7 @@ pub async fn impulse(args: &ImpulseArgs) -> Result<()> {
 fn sync_users(impulse_conn: &mut PgConnection) -> Result<usize> {
     let unsynced = User::unsynced(impulse_conn)?;
     let manager = managed_db_manager()?;
+    let count = unsynced.len();
     for mut user in unsynced {
         match user.user_status {
             UserStatus::Active => manager.enable_pg_user(&user.pg_name)?,
@@ -102,7 +103,7 @@ fn sync_users(impulse_conn: &mut PgConnection) -> Result<usize> {
         }
         user.mark_synced(impulse_conn)?;
     }
-    Ok(unsynced.len())
+    Ok(count)
 }
 
 fn managed_db_manager() -> Result<PostgresManager> {
