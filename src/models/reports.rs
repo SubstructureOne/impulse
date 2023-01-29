@@ -13,9 +13,20 @@ use crate::schema::reports;
 #[DieselTypePath = "crate::schema::sql_types::Pgpkttype"]
 #[DbValueStyle = "verbatim"]
 pub enum PostgresqlPacketType {
+    Authentication,
     Startup,
     Query,
     Other
+}
+impl From<&prew::postgresql::PostgresqlPacketInfo> for PostgresqlPacketType {
+    fn from(prew_packet_type: &prew::postgresql::PostgresqlPacketInfo) -> Self {
+        match prew_packet_type {
+            prew::postgresql::PostgresqlPacketInfo::Authentication(_) => PostgresqlPacketType::Authentication,
+            prew::postgresql::PostgresqlPacketInfo::Startup(_) => PostgresqlPacketType::Other,
+            prew::postgresql::PostgresqlPacketInfo::Query(_) => PostgresqlPacketType::Other,
+            prew::postgresql::PostgresqlPacketInfo::Other => PostgresqlPacketType::Other,
+        }
+    }
 }
 
 #[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Copy, Clone)]
@@ -24,6 +35,14 @@ pub enum PostgresqlPacketType {
 pub enum PacketDirection {
     Forward,
     Backward
+}
+impl From<prew::packet::Direction> for PacketDirection {
+    fn from(direction: prew::packet::Direction) -> Self {
+        match direction {
+            prew::packet::Direction::Forward => PacketDirection::Forward,
+            prew::packet::Direction::Backward => PacketDirection::Backward,
+        }
+    }
 }
 
 #[derive(Queryable, Debug, PartialEq)]
@@ -91,24 +110,26 @@ pub struct NewReport {
 
 impl NewReport {
     pub fn create(
-        conn: &mut PgConnection,
         username: Option<String>,
         packet_type: PostgresqlPacketType,
         direction: Option<PacketDirection>,
         packet_info: Option<serde_json::Value>,
         packet_bytes: Option<Vec<u8>>,
         charged: bool
-    ) -> Result<Report> {
-        let new_report = NewReport {
+    ) -> NewReport {
+        NewReport {
             username,
             packet_type,
             direction,
             packet_info,
             packet_bytes,
             charged
-        };
+        }
+    }
+
+    pub fn commit(&self, conn: &mut PgConnection) -> Result<Report> {
         let query = diesel::insert_into(reports::table)
-            .values(&new_report);
+            .values(self);
         trace!("Creating report: {}", debug_query::<Pg, _>(&query));
         Ok(query.get_result::<Report>(conn)?)
     }

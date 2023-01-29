@@ -1,4 +1,5 @@
 CREATE TYPE pgpkttype AS ENUM (
+    'Authentication',
     'Startup',
     'Query',
     'Other'
