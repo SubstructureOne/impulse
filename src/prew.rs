@@ -7,6 +7,7 @@ use log::error;
 use prew::{Reporter, PostgresqlPacket};
 use prew::packet::Direction;
 use prew::rule::AuthenticationContext;
+
 use crate::models::reports::{NewReport, PostgresqlPacketType};
 
 #[derive(Clone, Debug)]

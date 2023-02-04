@@ -1,8 +1,7 @@
 CREATE TYPE chargetype AS ENUM (
     'DataTransferInBytes',
     'DataTransferOutBytes',
-    'DataStorageByteHours',
-    'TimeCharge'
+    'DataStorageByteHours'
 );
 
 CREATE TYPE timechargetype AS ENUM (
