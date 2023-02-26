@@ -26,14 +26,13 @@ fn create_report_test() -> Result<()> {
     let charged = false;
     info!("Creating report");
     let report = NewReport::create(
-        &mut conn,
         username.clone(),
         packet_type,
         direction,
         packet_info.clone(),
         packet_bytes.clone(),
         charged
-    )?;
+    ).commit(&mut conn)?;
     info!("Report created");
     assert_eq!(&report.username, &username);
     assert_eq!(report.packet_type, packet_type);
