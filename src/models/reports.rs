@@ -10,7 +10,7 @@ use crate::schema::reports;
 
 
 #[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Copy, Clone)]
-#[DieselTypePath = "crate::schema::sql_types::Pgpkttype"]
+#[ExistingTypePath = "crate::schema::sql_types::Pgpkttype"]
 #[DbValueStyle = "verbatim"]
 pub enum PostgresqlPacketType {
     Authentication,
@@ -30,7 +30,7 @@ impl From<&prew::postgresql::PostgresqlPacketInfo> for PostgresqlPacketType {
 }
 
 #[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Copy, Clone)]
-#[DieselTypePath = "crate::schema::sql_types::Pktdirection"]
+#[ExistingTypePath = "crate::schema::sql_types::Pktdirection"]
 #[DbValueStyle = "verbatim"]
 pub enum PacketDirection {
     Forward,

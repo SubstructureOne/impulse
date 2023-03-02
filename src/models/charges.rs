@@ -17,7 +17,7 @@ use crate::schema::timecharges;
 
 
 #[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Eq, Hash, Copy, Clone, Sequence)]
-#[DieselTypePath = "crate::schema::sql_types::Chargetype"]
+#[ExistingTypePath = "crate::schema::sql_types::Chargetype"]
 #[DbValueStyle = "verbatim"]
 pub enum ChargeType {
     DataTransferInBytes,
@@ -33,7 +33,7 @@ impl From<TimeChargeType> for ChargeType {
 }
 
 #[derive(diesel_derive_enum::DbEnum, Debug, Copy, Clone, Sequence)]
-#[DieselTypePath = "crate::schema::sql_types::Timechargetype"]
+#[ExistingTypePath = "crate::schema::sql_types::Timechargetype"]
 #[DbValueStyle = "verbatim"]
 pub enum TimeChargeType {
     DataStorageBytes,

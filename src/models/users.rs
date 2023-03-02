@@ -7,7 +7,7 @@ use crate::schema::users;
 
 
 #[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Copy, Clone)]
-#[DieselTypePath = "crate::schema::sql_types::Userstatus"]
+#[ExistingTypePath = "crate::schema::sql_types::Userstatus"]
 #[DbValueStyle = "verbatim"]
 pub enum UserStatus {
     Active,
