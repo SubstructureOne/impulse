@@ -1,9 +1,9 @@
 use std::sync::Arc;
 use anyhow::Result;
-use prew::{PacketRules, PrewRuleSet, RewriteReverseProxy};
+use prew::{PacketRules, RewriteReverseProxy, RuleSetProcessor};
 use clap::Parser;
 use futures::lock::Mutex;
-use impulse::prew::Context;
+use impulse::prew::{AppendUserNameTransformer, Context, ImpulseReporter};
 
 
 #[derive(Debug, Parser)]
@@ -22,14 +22,14 @@ pub async fn main() -> Result<()> {
     let args = PrewArgs::parse();
     let parser = prew::PostgresParser::new();
     let filter = prew::NoFilter::new();
-    let transformer = prew::NoTransform::new();
+    let transformer = AppendUserNameTransformer::new();
     let encoder = prew::MessageEncoder::new();
-    let reporter = prew::NoReport::new();
+    let reporter = ImpulseReporter::new();
     let report_connstr = args.report_connstr;
     let create_context = move || {
         Context::new(report_connstr.clone()).unwrap()
     };
-    let prew_rules = PrewRuleSet::new(
+    let prew_rules = RuleSetProcessor::new(
         &parser,
         &filter,
         &transformer,
@@ -45,6 +45,6 @@ pub async fn main() -> Result<()> {
         processor,
     };
     proxy.add_proxy(Box::new(packet_rules)).await;
-    proxy.run(String::from("")).await;
+    proxy.run().await;
     Ok(())
 }

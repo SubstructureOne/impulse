@@ -946,6 +946,7 @@ dependencies = [
  "lazy_static",
  "log",
  "passwords",
+ "pg_query",
  "postgres-types",
  "prew",
  "regex",
@@ -1394,9 +1395,9 @@ dependencies = [
 
 [[package]]
 name = "prew"
-version = "0.1.3"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "374160324345748b69181df1520d1ebdb4c0b7767791b8ae5e8a6acd33acb79f"
+checksum = "8838ade3fa99e87e299220bed8dc10ef31268b724f1b8d3e9e2801bbb13933a4"
 dependencies = [
  "anyhow",
  "async-trait",
