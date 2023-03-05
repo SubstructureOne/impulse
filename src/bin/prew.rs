@@ -3,6 +3,7 @@ use anyhow::Result;
 use prew::{PacketRules, RewriteReverseProxy, RuleSetProcessor};
 use clap::Parser;
 use futures::lock::Mutex;
+use log::info;
 use impulse::prew::{AppendUserNameTransformer, Context, ImpulseReporter};
 
 
@@ -19,6 +20,7 @@ pub struct PrewArgs {
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
+    env_logger::init();
     let args = PrewArgs::parse();
     let parser = prew::PostgresParser::new();
     let filter = prew::NoFilter::new();
@@ -45,6 +47,7 @@ pub async fn main() -> Result<()> {
         processor,
     };
     proxy.add_proxy(Box::new(packet_rules)).await;
+    info!("Starting proxy");
     proxy.run().await;
     Ok(())
 }
