@@ -1,17 +1,22 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use diesel::debug_query;
-use diesel::pg::Pg;
+use diesel::{AsExpression, debug_query, deserialize, FromSqlRow, serialize};
+use diesel::pg::{Pg, PgValue};
 use diesel::prelude::*;
+use diesel::serialize::{IsNull, Output, ToSql};
 use log::{trace};
 use uuid::Uuid;
+use std::io::Write;
+use diesel::deserialize::FromSql;
 
 use crate::schema::reports;
+use crate::schema::sql_types::Pgpkttype;
 
 
-#[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Copy, Clone)]
-#[ExistingTypePath = "crate::schema::sql_types::Pgpkttype"]
-#[DbValueStyle = "verbatim"]
+#[derive(Copy, Clone, Debug, PartialEq, FromSqlRow, AsExpression)]
+// #[ExistingTypePath = "crate::schema::sql_types::Pgpkttype"]
+// #[DbValueStyle = "verbatim"]
+#[diesel(sql_type = Pgpkttype)]
 pub enum PostgresqlPacketType {
     Authentication,
     Startup,
@@ -25,6 +30,28 @@ impl From<&prew::postgresql::PostgresqlPacketInfo> for PostgresqlPacketType {
             prew::postgresql::PostgresqlPacketInfo::Startup(_) => PostgresqlPacketType::Other,
             prew::postgresql::PostgresqlPacketInfo::Query(_) => PostgresqlPacketType::Other,
             prew::postgresql::PostgresqlPacketInfo::Other => PostgresqlPacketType::Other,
+        }
+    }
+}
+impl ToSql<Pgpkttype, Pg> for PostgresqlPacketType {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {
+        match *self {
+            PostgresqlPacketType::Authentication => out.write_all(b"Authentication")?,
+            PostgresqlPacketType::Startup => out.write_all(b"Startup")?,
+            PostgresqlPacketType::Query => out.write_all(b"Query")?,
+            PostgresqlPacketType::Other => out.write_all(b"Other")?,
+        }
+        Ok(IsNull::No)
+    }
+}
+impl FromSql<Pgpkttype, Pg> for PostgresqlPacketType {
+    fn from_sql(bytes: PgValue<'_>) -> deserialize::Result<Self> {
+        match bytes.as_bytes() {
+            b"Authentication" => Ok(PostgresqlPacketType::Authentication),
+            b"Startup" => Ok(PostgresqlPacketType::Startup),
+            b"Query" => Ok(PostgresqlPacketType::Query),
+            b"Other" => Ok(PostgresqlPacketType::Other),
+            _ => Err("Unrecognized enum value".into())
         }
     }
 }

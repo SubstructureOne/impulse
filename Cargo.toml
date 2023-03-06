@@ -11,7 +11,7 @@ async_once = "0.2.6"
 chrono = "0.4.23"
 clap = { version = "4.0.32", features = ["derive"] }
 diesel = { version = "2.0.2", features = ["postgres", "chrono", "serde_json", "uuid"] }
-diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
+diesel-derive-enum = { version = "2.0.1", features = ["postgres"] }
 diesel_migrations = { version = "2.0.0", features = ["postgres"] }
 docker-api = "0.12.2"
 dotenvy = "0.15.6"
@@ -39,3 +39,6 @@ path = "src/lib.rs"
 [[bin]]
 name = "impulse"
 path = "src/bin/impulse.rs"
+
+[dev-dependencies]
+test-log = "0.2.11"
