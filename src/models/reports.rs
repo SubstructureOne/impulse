@@ -16,15 +16,18 @@ pub enum PostgresqlPacketType {
     Authentication,
     Startup,
     Query,
+    SslRequest,
     Other
 }
 impl From<&prew::postgresql::PostgresqlPacketInfo> for PostgresqlPacketType {
     fn from(prew_packet_type: &prew::postgresql::PostgresqlPacketInfo) -> Self {
         match prew_packet_type {
             prew::postgresql::PostgresqlPacketInfo::Authentication(_) => PostgresqlPacketType::Authentication,
-            prew::postgresql::PostgresqlPacketInfo::Startup(_) => PostgresqlPacketType::Other,
-            prew::postgresql::PostgresqlPacketInfo::Query(_) => PostgresqlPacketType::Other,
+            prew::postgresql::PostgresqlPacketInfo::Startup(_) => PostgresqlPacketType::Startup,
+            prew::postgresql::PostgresqlPacketInfo::Query(_) => PostgresqlPacketType::Query,
+            prew::postgresql::PostgresqlPacketInfo::SslRequest => PostgresqlPacketType::SslRequest,
             prew::postgresql::PostgresqlPacketInfo::Other => PostgresqlPacketType::Other,
+
         }
     }
 }
