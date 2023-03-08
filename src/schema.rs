@@ -6,14 +6,6 @@ pub mod sql_types {
     pub struct Chargetype;
 
     #[derive(diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "pgpkttype"))]
-    pub struct Pgpkttype;
-
-    #[derive(diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "pktdirection"))]
-    pub struct Pktdirection;
-
-    #[derive(diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "timechargetype"))]
     pub struct Timechargetype;
 
@@ -58,16 +50,12 @@ diesel::table! {
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::Pgpkttype;
-    use super::sql_types::Pktdirection;
-
     reports (packet_id) {
         packet_id -> Int8,
         username -> Nullable<Text>,
-        packet_type -> Pgpkttype,
+        packet_type -> Text,
         packet_time -> Timestamptz,
-        direction -> Nullable<Pktdirection>,
+        direction -> Nullable<Text>,
         packet_info -> Nullable<Jsonb>,
         packet_bytes -> Nullable<Bytea>,
         charged -> Bool,
