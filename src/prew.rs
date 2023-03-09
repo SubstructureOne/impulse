@@ -6,7 +6,7 @@ use diesel::pg::Pg;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use futures::lock::Mutex;
-use log::{debug, error};
+use log::{debug, error, info};
 use pg_query::NodeMut;
 
 use prew::{Reporter, PostgresqlPacket, Transformer};
@@ -76,6 +76,7 @@ impl Reporter<PostgresqlPacket, Context> for ImpulseReporter {
         let username;
         if authinfo.authenticated {
             username = authinfo.username.clone();
+            info!("User is authenticated, username {}", username.as_ref().unwrap());
         } else {
             username = None;
         }
