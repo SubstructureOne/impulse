@@ -1,5 +1,7 @@
-use anyhow::{Result};
 use log::info;
+
+use anyhow::{Result};
+use test_log::test;
 
 use impulse::models::reports::*;
 

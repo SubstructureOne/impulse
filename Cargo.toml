@@ -10,8 +10,8 @@ async-trait = "0.1.63"
 async_once = "0.2.6"
 chrono = "0.4.23"
 clap = { version = "4.0.32", features = ["derive"] }
-diesel = { version = "2.0.2", features = ["postgres", "chrono", "serde_json", "uuid"] }
-diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
+diesel = { version = "2.0.2", features = ["postgres", "chrono", "r2d2", "serde_json", "uuid"] }
+diesel-derive-enum = { version = "2.0.1", features = ["postgres"] }
 diesel_migrations = { version = "2.0.0", features = ["postgres"] }
 docker-api = "0.12.2"
 dotenvy = "0.15.6"
@@ -24,10 +24,11 @@ log = "0.4.17"
 passwords = "3.1.12"
 pg_query = "0.7.0"
 postgres-types = { version = "0.2.4", features = ["derive"] }
-prew = "0.1.5"
+prew = "0.1.7"
 regex = "1.7.1"
 serde_json = "1.0.91"
 tokio = { version = "1.24.1", features = ["full"] }
+tokio-diesel = "0.3.0"
 uuid = { version = "1.2.2", features = ["v4"] }
 
 
@@ -39,3 +40,6 @@ path = "src/lib.rs"
 [[bin]]
 name = "impulse"
 path = "src/bin/impulse.rs"
+
+[dev-dependencies]
+test-log = "0.2.11"
