@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
-use diesel::pg::Pg;
+// use diesel::pg::Pg;
 use diesel::prelude::*;
-use diesel::r2d2::{ConnectionManager, Pool};
+// use diesel::r2d2::{ConnectionManager, Pool};
 use futures::lock::Mutex;
 use log::{debug, error, info};
 use pg_query::NodeMut;
@@ -18,7 +18,8 @@ use crate::models::reports::{NewReport, PostgresqlPacketType};
 
 #[derive(Clone, Debug)]
 struct ReporterContext {
-    pool: Pool<ConnectionManager<PgConnection>>,
+    // pool: Pool<ConnectionManager<PgConnection>>,
+    conn: Arc<Mutex<PgConnection>>,
 }
 
 #[derive(Clone, Debug)]
@@ -33,11 +34,11 @@ impl prew::rule::WithAuthenticationContext for Context {
 }
 impl Context {
     pub fn new(conn_str: String) -> Result<Context> {
-        let manager = ConnectionManager::<PgConnection>::new(conn_str);
-        let pool = Pool::builder().build(manager)?;
-        // let conn = Arc::new(Mutex::new(
-        //     PgConnection::establish(&conn_str)?
-        // ));
+        // let manager = ConnectionManager::<PgConnection>::new(conn_str);
+        // let pool = Pool::builder().build(manager)?;
+        let conn = Arc::new(Mutex::new(
+            PgConnection::establish(&conn_str)?
+        ));
         Ok(
             Context{
                 authinfo: AuthenticationContext {
@@ -45,7 +46,7 @@ impl Context {
                     username: None,
                 },
                 reporter_context: ReporterContext {
-                    pool,
+                    conn,
                 }
             }
         )
@@ -80,7 +81,8 @@ impl Reporter<PostgresqlPacket, Context> for ImpulseReporter {
         } else {
             username = None;
         }
-        let mut conn = context.reporter_context.pool.get()?;
+        // let mut conn = context.reporter_context.pool.get()?;
+        let mutex = context.reporter_context.conn.clone();
         tokio::spawn(async move {
             let report = NewReport::create(
                 username,
@@ -92,7 +94,7 @@ impl Reporter<PostgresqlPacket, Context> for ImpulseReporter {
             );
             {
                 // mutex scope
-                // let mut h = conn.lock().await;
+                let mut conn = mutex.lock().await;
                 if let Err(error) = report.commit(&mut conn) {
                     error!("Unable to report on packet: {:?} - {:?}", &report.packet_info, &error);
                 }
