@@ -29,6 +29,7 @@ pub struct ExtTransaction {
     pub user_id: Uuid,
     pub amount: f64,
     pub exttransaction_time: DateTime<Utc>,
+    pub exttransaction_extid: Uuid,
 }
 impl ExtTransaction {
     pub fn retrieve(conn: &mut PgConnection, exttransaction_id_: i64) -> Result<ExtTransaction> {
@@ -46,18 +47,21 @@ pub struct NewExtTransaction {
     pub user_id: Uuid,
     pub amount: f64,
     pub exttransaction_time: Option<DateTime<Utc>>,
+    pub exttransaction_extid: Uuid,
 }
 impl NewExtTransaction {
     pub fn create(
         conn: &mut PgConnection,
         user_id: Uuid,
         amount: f64,
-        exttransaction_time: Option<DateTime<Utc>>
+        exttransaction_time: Option<DateTime<Utc>>,
+        exttransaction_extid: Uuid,
     ) -> Result<ExtTransaction> {
         let new_txn = NewExtTransaction {
             user_id,
             amount,
             exttransaction_time,
+            exttransaction_extid,
         };
         Ok(
             diesel::insert_into(exttransactions::table)

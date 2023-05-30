@@ -46,6 +46,7 @@ diesel::table! {
         user_id -> Uuid,
         amount -> Float8,
         exttransaction_time -> Timestamptz,
+        exttransaction_extid -> Uuid,
     }
 }
 

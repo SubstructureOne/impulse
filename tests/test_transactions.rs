@@ -116,17 +116,20 @@ fn create_exttransaction_test() -> Result<()> {
     let mut conn = context.impulse_manager.pg_connect_db(&context.db_name)?;
     let user_id = Uuid::new_v4();
     let amount = 154.3;
+    let extid = Uuid::new_v4();
     let expected_txn = ExtTransaction {
         exttransaction_id: 0,
         user_id: user_id.clone(),
         amount,
         exttransaction_time: chrono::offset::Utc::now(),
+        exttransaction_extid: extid,
     };
     let new_txn = NewExtTransaction::create(
         &mut conn,
         user_id.clone(),
         amount,
-        None
+        None,
+        extid,
     )?;
     assert!(&expected_txn.expected_equals(&new_txn));
     let retrieved = ExtTransaction::retrieve(
