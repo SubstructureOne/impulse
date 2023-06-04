@@ -29,7 +29,7 @@ pub struct ExtTransaction {
     pub user_id: Uuid,
     pub amount: f64,
     pub exttransaction_time: DateTime<Utc>,
-    pub exttransaction_extid: Uuid,
+    pub exttransaction_extid: String,
 }
 impl ExtTransaction {
     pub fn retrieve(conn: &mut PgConnection, exttransaction_id_: i64) -> Result<ExtTransaction> {
@@ -47,7 +47,7 @@ pub struct NewExtTransaction {
     pub user_id: Uuid,
     pub amount: f64,
     pub exttransaction_time: Option<DateTime<Utc>>,
-    pub exttransaction_extid: Uuid,
+    pub exttransaction_extid: String,
 }
 impl NewExtTransaction {
     pub fn create(
@@ -55,7 +55,7 @@ impl NewExtTransaction {
         user_id: Uuid,
         amount: f64,
         exttransaction_time: Option<DateTime<Utc>>,
-        exttransaction_extid: Uuid,
+        exttransaction_extid: String,
     ) -> Result<ExtTransaction> {
         let new_txn = NewExtTransaction {
             user_id,
