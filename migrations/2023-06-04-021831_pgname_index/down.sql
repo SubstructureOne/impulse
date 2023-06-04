@@ -1,0 +1,1 @@
+DROP INDEX users_pgname_ix;
