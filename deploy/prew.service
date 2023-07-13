@@ -1,0 +1,15 @@
+[Unit]
+Description=Prew PostgreSQL reverse rewrite proxy
+After=network.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=prew
+ExecStart=/opt/impulse/bin/prew
+Environment=RUST_LOG=trace
+
+[Install]
+WantedBy=multi-user.target
