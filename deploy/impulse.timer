@@ -1,0 +1,10 @@
+[Unit]
+Description=Generates impulse events hourly
+Requires=impulse.service
+
+[Timer]
+Unit=impulse.service
+OnCalendar=hourly
+
+[Install]
+WantedBy=timers.target
