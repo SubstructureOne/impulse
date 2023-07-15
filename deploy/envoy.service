@@ -1,5 +1,5 @@
 [Unit]
-Description=Prew PostgreSQL reverse rewrite proxy
+Description=Envoy Proxy
 After=network-online.target
 Requires=network-online.target
 StartLimitIntervalSec=0
@@ -9,8 +9,7 @@ Type=simple
 Restart=always
 RestartSec=5
 User=prew
-ExecStart=/opt/impulse/bin/prew
-Environment=RUST_LOG=trace
+ExecStart=/opt/envoy/bin/envoy -c /opt/envoy/etc/envoy.yaml
 
 [Install]
 WantedBy=multi-user.target
