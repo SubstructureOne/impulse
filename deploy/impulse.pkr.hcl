@@ -30,13 +30,13 @@ data "amazon-ami" "impulse" {
 
 source "amazon-ebs" "impulse" {
   ami_name = "impulse-${local.timestamp}"
-  instance_type = "t2.medium"
+  instance_type = "t2.micro"
   region = var.region
   source_ami = "${data.amazon-ami.impulse.id}"
   ssh_username = "ubuntu"
 
   tags = {
-    Name = "impulse-ebs"
+    Name = "impulse-ami"
     OS = "Ubuntu"
     Release = "22.04"
     Base_AMI_ID = "{{ .SourceAMI }}"
@@ -44,7 +44,7 @@ source "amazon-ebs" "impulse" {
   }
 
   snapshot_tags = {
-    Name= "impulse-ebs-snapshot"
+    Name = "impulse-ami-snapshot"
     source = "hashicorp/learn"
     purpose = "demo"
   }
@@ -64,13 +64,13 @@ build {
     sources = [
       "../target/release/impulse",
       "../target/release/prew",
-      "../target/release/create_database"
-    ],
+      "../target/release/setup_database"
+    ]
     destination = "/setup/release/"
   }
 
   provisioner "file" {
-    source = "image_files",
+    source = "image_files"
     destination = "/setup/"
   }
 

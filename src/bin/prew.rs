@@ -1,9 +1,12 @@
 use std::sync::Arc;
+use std::env;
+
 use anyhow::Result;
-use prew::{PacketRules, RewriteReverseProxy, RuleSetProcessor};
 use clap::Parser;
 use futures::lock::Mutex;
 use log::info;
+use prew::{PacketRules, RewriteReverseProxy, RuleSetProcessor};
+
 use impulse::prew::{AppendUserNameTransformer, Context, ImpulseReporter};
 
 
@@ -13,9 +16,9 @@ pub struct PrewArgs {
     #[arg(short, long)]
     bind_addr: String,
     #[arg(short, long)]
-    server_addr: String,
+    server_addr: Option<String>,
     #[arg(short, long)]
-    report_connstr: String,
+    report_connstr: Option<String>,
 }
 
 #[tokio::main]
@@ -27,7 +30,8 @@ pub async fn main() -> Result<()> {
     let transformer = AppendUserNameTransformer::new();
     let encoder = prew::MessageEncoder::new();
     let reporter = ImpulseReporter::new();
-    let report_connstr = args.report_connstr;
+    let report_connstr = args.report_connstr.unwrap_or(env::var("DATABASE_URL")?);
+    let server_addr = args.server_addr.unwrap_or(env::var("KESTREL_DATABASE_URL")?);
     let create_context = move || {
         Context::new(report_connstr.clone()).unwrap()
     };
@@ -43,7 +47,7 @@ pub async fn main() -> Result<()> {
     let mut proxy = RewriteReverseProxy::new();
     let packet_rules = PacketRules {
         bind_addr: args.bind_addr,
-        server_addr: args.server_addr,
+        server_addr,
         processor,
     };
     proxy.add_proxy(Box::new(packet_rules)).await;
