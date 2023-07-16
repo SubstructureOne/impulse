@@ -55,9 +55,8 @@ build {
 
   provisioner "shell" {
     inline = [
-      "sudo mkdir -p /opt/impulse/bin",
-      "sudo mkdir -p /opt/envoy/bin",
-      "sudo mkdir /opt/envoy/etc"
+      "sudo mkdir -p /setup/release",
+      "sudo chmod -R 777 /setup"
     ]
   }
 
@@ -67,12 +66,12 @@ build {
       "../target/release/prew",
       "../target/release/create_database"
     ],
-    destination = "/opt/impulse/bin/"
+    destination = "/setup/release/"
   }
 
   provisioner "file" {
-    source = "envoy-postgres.yaml",
-    destination = "/opt/envoy/etc/envoy-postgres.yaml"
+    source = "image_files",
+    destination = "/setup/"
   }
 
   provisioner "shell" {
