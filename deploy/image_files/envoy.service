@@ -9,7 +9,7 @@ Type=simple
 Restart=always
 RestartSec=5
 User=prew
-ExecStart=/opt/envoy/bin/envoy -c /opt/envoy/etc/envoy-yaml.yaml
+ExecStart=/opt/envoy/bin/envoy -c /opt/envoy/etc/envoy-postgres.yaml
 
 [Install]
 WantedBy=multi-user.target

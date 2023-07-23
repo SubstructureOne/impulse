@@ -6,6 +6,9 @@ cd /setup
 
 ENVOYDOWNLOAD="https://github.com/envoyproxy/envoy/releases/download/v1.26.3/envoy-contrib-1.26.3-linux-x86_64"
 
+sudo apt update
+sudo apt install -y libpq-dev postgresql-14
+
 sudo mkdir -p /opt/impulse/bin
 sudo mkdir -p /opt/envoy/bin
 sudo mkdir /opt/envoy/etc
