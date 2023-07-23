@@ -24,8 +24,8 @@ data "amazon-ami" "impulse" {
     virtualization-type = "hvm"
   }
   most_recent = true
-  owners      = ["099720109477"]
-  region      = var.region
+  owners = ["099720109477"]
+  region = var.region
 }
 
 source "amazon-ebs" "impulse" {
@@ -75,6 +75,6 @@ build {
   }
 
   provisioner "shell" {
-    script           = "./setup.sh"
+    script = "./setup.sh"
   }
 }
