@@ -1,0 +1,3 @@
+bind_addr = "0.0.0.0:6432"
+server_addr = "127.0.0.1:7432"
+report_connstr = "postgres://postgres:pw@localhost/impulse"

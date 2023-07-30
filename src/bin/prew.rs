@@ -48,6 +48,7 @@ pub async fn main() -> Result<()> {
     let mut args = PrewArgs::parse();
     let opt_config = parse_config(args.config_file)?;
     if let Some(config) = opt_config {
+        println!("Loaded config: {:?}", &config);
         args.bind_addr = args.bind_addr.or(config.bind_addr);
         args.server_addr = args.server_addr.or(config.server_addr);
         args.report_connstr = args.report_connstr.or(config.report_connstr);
@@ -57,8 +58,8 @@ pub async fn main() -> Result<()> {
     let transformer = AppendUserNameTransformer::new();
     let encoder = prew::MessageEncoder::new();
     let reporter = ImpulseReporter::new();
-    let report_connstr = args.report_connstr.unwrap_or(env::var("DATABASE_URL")?);
-    let server_addr = args.server_addr.unwrap_or(env::var("KESTREL_DATABASE_URL")?);
+    let report_connstr = args.report_connstr.unwrap_or_else(|| env::var("DATABASE_URL").unwrap());
+    let server_addr = args.server_addr.unwrap_or_else(|| env::var("KESTREL_DATABASE_URL").unwrap());
     let create_context = move || {
         Context::new(report_connstr.clone()).unwrap()
     };

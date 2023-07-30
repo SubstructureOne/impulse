@@ -15,6 +15,10 @@ variable "region" {
   type = string
 }
 
+variable "postgres_password" {
+  type = string
+}
+
 data "amazon-ami" "impulse" {
   filters = {
     architecture = "x86_64"
@@ -76,5 +80,8 @@ build {
 
   provisioner "shell" {
     script = "./setup.sh"
+    environment_vars = [
+      "POSTGRES_PASSWORD=${var.postgres_password}"
+    ]
   }
 }
