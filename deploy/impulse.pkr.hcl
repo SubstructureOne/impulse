@@ -74,6 +74,13 @@ build {
   }
 
   provisioner "file" {
+    sources = [
+      "../migrations"
+    ]
+    destination = "/setup/"
+  }
+
+  provisioner "file" {
     source = "image_files"
     destination = "/setup/"
   }

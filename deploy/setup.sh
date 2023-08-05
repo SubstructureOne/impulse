@@ -6,14 +6,29 @@ cd /setup
 
 ENVOYDOWNLOAD="https://github.com/envoyproxy/envoy/releases/download/v1.26.3/envoy-contrib-1.26.3-linux-x86_64"
 
+# wait for cloud-init to finish
+/usr/bin/cloud-init status --wait
+
 # install prerequisites
-# sudo apt update
+sudo apt update
 sudo apt install -y libpq-dev postgresql-14
+# diesel requirements
+sudo apt install -y build-essential libmysqlclient-dev libsqlite3-dev
 
 # setup postgres
 sudo -u postgres psql -c "ALTER ROLE postgres PASSWORD '${POSTGRES_PASSWORD}'"
+sudo -u postgres psql -c "CREATE DATABASE impulse"
 sudo cp image_files/postgresql.conf /etc/postgresql/14/main/postgresql.conf
 sudo systemctl restart postgresql
+
+# database migration
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > install_rustup.sh
+chmod +x install_rustup.sh
+./install_rustup.sh -y
+source "$HOME/.cargo/env"
+cargo install diesel_cli
+cp image_files/.env .
+diesel migration run
 
 sudo mkdir -p /opt/impulse/bin
 sudo mkdir /opt/impulse/etc
