@@ -8,12 +8,13 @@ use diesel::pg::Pg;
 use enum_iterator::Sequence;
 use itertools::Itertools;
 use log::{trace};
-use uuid::Uuid;
+use uuid::{Uuid};
 
 use crate::models::reports::{PacketDirection, ReportToCharge};
 use crate::schema;
 use crate::schema::charges;
 use crate::schema::timecharges;
+use crate::models::reports::Report;
 
 
 #[derive(diesel_derive_enum::DbEnum, Debug, PartialEq, Eq, Hash, Copy, Clone, Sequence)]
@@ -118,6 +119,7 @@ impl Charge {
             .flat_map(|hashmap| hashmap.values())
             .map(|new_charge| new_charge.commit(conn))
             .collect::<Result<Vec<Charge>>>()
+
     }
 
     pub fn from_timecharges_for_user(
@@ -223,8 +225,14 @@ impl Charge {
                     charge.report_ids.as_mut().unwrap().push(new_report.report_id);
                 },
                 None => {
+                    // some "charges" will have the user unassigned; e.g.,
+                    // all Postgres bytes transferred before user auth. We
+                    // still want to "charge" these to an account, so we
+                    // charge them to the "postgres" user, representing the
+                    // system administrator, who is the defined to be the nil
+                    // UUID.
                     let charge = NewCharge {
-                        user_id: new_report.user_id.unwrap(), // FIXME
+                        user_id: new_report.user_id.unwrap_or_else(|| Uuid::nil()),
                         charge_type,
                         quantity: new_report.num_bytes.unwrap() as f64,
                         rate: 0.1, // FIXME
@@ -304,7 +312,14 @@ impl NewCharge {
         let query = diesel::insert_into(charges::table)
             .values(self);
         trace!("Creating charge: {}", debug_query::<Pg, _>(&query));
-        Ok(query.get_result::<Charge_>(conn)?.into())
+        let result: Charge = query.get_result::<Charge_>(conn)?.into();
+        if let Some(reports) = &result.report_ids {
+            reports
+                .iter()
+                .map(|report_id| Report::mark_charged(*report_id, conn))
+                .collect::<Result<Vec<_>, _>>()?;
+        }
+        Ok(result)
     }
 }
 

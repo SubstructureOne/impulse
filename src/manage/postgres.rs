@@ -209,13 +209,13 @@ impl PostgresManager {
         Ok(())
     }
 
-    pub fn compute_storage(&self) -> Result<HashMap<Uuid, i64>> {
+    pub fn compute_storage(&self, impulse_conn: &mut PgConnection) -> Result<HashMap<Uuid, i64>> {
         let mut conn = self.pg_connect()?;
         let mut result: HashMap<Uuid, i64> = HashMap::new();
         let db_sizes = sql_query(
-            "SELECT datname, pg_database_size(datname) FROM pg_database"
+            "SELECT datname as db_name, pg_database_size(datname) as db_bytes FROM pg_database"
         ).load::<PgDatabaseSize>(&mut conn)?;
-        let name2uuid = User::all(&mut conn)?
+        let name2uuid = User::all(impulse_conn)?
             .iter()
             .map(|user| (user.pg_name.clone(), user.user_id))
             .into_iter()

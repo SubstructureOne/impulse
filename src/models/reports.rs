@@ -91,7 +91,8 @@ pub struct Report_ {
     pub packet_bytes: Option<Vec<u8>>,
     pub charged: bool,
 }
-pub struct Report {
+pub struct
+Report {
     pub report_id: i64,
     pub username: Option<String>,
     pub packet_type: PostgresqlPacketType,
@@ -111,6 +112,14 @@ impl Report {
             .map(Report::from)
             .collect()
         )
+    }
+
+    pub fn mark_charged(report_id: i64, conn: &mut PgConnection) -> Result<()> {
+        use crate::schema::reports::dsl::*;
+        diesel::update(reports.find(report_id))
+            .set(charged.eq(true))
+            .execute(conn)?;
+        Ok(())
     }
 }
 impl From<Report_> for Report {
