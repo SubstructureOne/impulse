@@ -1,0 +1,15 @@
+[Unit]
+Description=Envoy Proxy
+After=network-online.target
+Requires=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=prew
+ExecStart=/opt/envoy/bin/envoy -c /opt/envoy/etc/envoy-postgres.yaml
+
+[Install]
+WantedBy=multi-user.target

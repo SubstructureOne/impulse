@@ -112,6 +112,14 @@ impl Report {
             .collect()
         )
     }
+
+    pub fn mark_charged(report_id: i64, conn: &mut PgConnection) -> Result<()> {
+        use crate::schema::reports::dsl::*;
+        diesel::update(reports.find(report_id))
+            .set(charged.eq(true))
+            .execute(conn)?;
+        Ok(())
+    }
 }
 impl From<Report_> for Report {
     fn from(value: Report_) -> Self {

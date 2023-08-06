@@ -68,7 +68,7 @@ pub async fn impulse(args: &ImpulseArgs) -> Result<()> {
         // and the charge creation.
         info!("Computing user storage");
         let manager = managed_db_manager()?;
-        let user2bytes = manager.compute_storage()?;
+        let user2bytes = manager.compute_storage(&mut impulse_conn)?;
         // use a single timestamp for all timecharges for simpler querying
         let timecharge_time = Utc::now();
         for (user_id, quantity_bytes) in user2bytes {
