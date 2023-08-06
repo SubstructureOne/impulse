@@ -91,8 +91,7 @@ pub struct Report_ {
     pub packet_bytes: Option<Vec<u8>>,
     pub charged: bool,
 }
-pub struct
-Report {
+pub struct Report {
     pub report_id: i64,
     pub username: Option<String>,
     pub packet_type: PostgresqlPacketType,
