@@ -32,6 +32,15 @@ impl From<TimeChargeType> for ChargeType {
         }
     }
 }
+impl ChargeType {
+    pub fn rate(&self) -> f64 {
+        match self {
+            ChargeType::DataTransferInBytes => 0.0,
+            ChargeType::DataTransferOutBytes => 1.5e-15,  // $.15/Gb
+            ChargeType::DataStorageByteHours => 2.0534e-13,  // $.15/Gb*mo
+        }
+    }
+}
 
 #[derive(diesel_derive_enum::DbEnum, Debug, Copy, Clone, Sequence)]
 #[ExistingTypePath = "crate::schema::sql_types::Timechargetype"]
@@ -231,14 +240,14 @@ impl Charge {
                     // charge them to the "postgres" user, representing the
                     // system administrator, who is the defined to be the nil
                     // UUID.
-                    let charge = NewCharge {
-                        user_id: new_report.user_id.unwrap_or_else(|| Uuid::nil()),
+                    let charge = NewCharge::new(
+                        new_report.user_id.unwrap_or_else(|| Uuid::nil()),
                         charge_type,
-                        quantity: new_report.num_bytes.unwrap() as f64,
-                        rate: 0.1, // FIXME
-                        report_ids: Some(vec![new_report.report_id]),
-                        charge_time: None, // FIXME?
-                    };
+                        new_report.num_bytes.unwrap() as f64,
+                        charge_type.rate(),
+                        Some(vec![new_report.report_id]),
+                        None,
+                    );
                     existing_charges.insert(charge_type, charge);
                 }
             }
@@ -357,11 +366,12 @@ impl TimeCharge {
             self.quantity
                 * (*charge_endtime - *charge_starttime).num_seconds() as f64
                 / 3600.0;
+        let charge_type: ChargeType = self.timecharge_type.into();
         Ok(NewCharge::new(
             self.user_id.clone(),
             self.timecharge_type.into(),
             charge_quantity,
-            1.0, // FIXME
+            charge_type.rate(),
             None,
             charge_time,
         ))
