@@ -4,6 +4,8 @@ use log::{debug, trace};
 use uuid::Uuid;
 
 use impulse::models::charges::*;
+use impulse::models::reports;
+use impulse::models::reports::{PacketDirection, PostgresqlPacketType};
 use crate::common::ExpectedEquals;
 
 mod common;
@@ -89,7 +91,7 @@ fn create_from_timecharges_test() -> Result<()> {
     assert_eq!(created_charges1.len(), 1);
     let expected_quantity = quantity1 * (charge1_time - timecharge1_time).num_seconds() as f64 / 3600.0;
     let created_charge1 = &created_charges1[0];
-    let expected_rate = 1.0; // FIXME
+    let expected_rate = ChargeType::DataStorageByteHours.rate();
     let expected_charge1 = Charge {
         charge_id: 0,
         charge_time: charge1_time,
@@ -130,5 +132,44 @@ fn create_from_timecharges_test() -> Result<()> {
     };
     debug!("Expecting {:?} to roughly equal {:?}", &created_charge2, &expected_charge2);
     assert!(created_charge2.expected_equals(&expected_charge2));
+    Ok(())
+}
+
+#[test]
+fn rate_test() -> Result<()> {
+    let context = common::TestContext::new("rate_test")?;
+    let mut conn = context.impulse_manager.pg_connect_db(&context.db_name)?;
+    let username = Some(String::from("username"));
+    let packet_type = PostgresqlPacketType::Other;
+    let direction = Some(PacketDirection::Forward);
+    let packet_info = None;
+    let packet_bytes = Some(vec![1, 2, 3, 4]);
+    let charged = false;
+    let report = reports::NewReport::create(
+        username,
+        packet_type,
+        direction,
+        packet_info,
+        packet_bytes,
+        charged
+    ).commit(&mut conn)?;
+    let report_id = report.report_id;
+    let userid = Uuid::new_v4();
+    let reports: Vec<reports::ReportToCharge> = vec![reports::ReportToCharge::with_userid(report, userid)];
+    let charges = Charge::from_reports(&mut conn, reports)?;
+    assert_eq!(charges.len(), 1);
+    let charge = &charges[0];
+    let expected_charge = Charge {
+        charge_id: 0,
+        charge_time: Utc::now(),
+        user_id: userid,
+        charge_type: ChargeType::DataTransferInBytes,
+        quantity: 4.0,
+        rate: ChargeType::DataTransferInBytes.rate(),
+        amount: 4.0 * ChargeType::DataTransferInBytes.rate(),
+        report_ids: Some(vec![report_id]),
+        transacted: false,
+    };
+    assert!(charge.expected_equals(&expected_charge));
     Ok(())
 }

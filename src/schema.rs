@@ -6,6 +6,7 @@ pub mod sql_types {
     pub struct Chargetype;
 
     #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId)]
     #[diesel(postgres_type(name = "timechargetype"))]
     pub struct Timechargetype;
 
