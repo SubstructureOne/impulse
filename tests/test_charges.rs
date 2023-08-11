@@ -91,12 +91,13 @@ fn create_from_timecharges_test() -> Result<()> {
     assert_eq!(created_charges1.len(), 1);
     let expected_quantity = quantity1 * (charge1_time - timecharge1_time).num_seconds() as f64 / 3600.0;
     let created_charge1 = &created_charges1[0];
-    let expected_rate = ChargeType::DataStorageByteHours.rate();
+    let expected_chargetype = ChargeType::DataStorageByteHours;
+    let expected_rate = expected_chargetype.rate();
     let expected_charge1 = Charge {
         charge_id: 0,
         charge_time: charge1_time,
         user_id,
-        charge_type: ChargeType::DataStorageByteHours,
+        charge_type: expected_chargetype,
         quantity: expected_quantity,
         rate: expected_rate,
         amount: expected_quantity * expected_rate,
