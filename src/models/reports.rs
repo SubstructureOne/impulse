@@ -182,6 +182,20 @@ impl ReportToCharge {
                 .collect()
         )
     }
+
+    pub fn with_userid(report: Report, user_id: Uuid) -> ReportToCharge {
+        let num_bytes: Option<i32> = match report.packet_bytes {
+            Some(byte_arr) => i32::try_from(byte_arr.len()).ok(),
+            None => None,
+        };
+        ReportToCharge {
+            report_id: report.report_id,
+            user_id: Some(user_id),
+            packet_type: report.packet_type,
+            direction: report.direction,
+            num_bytes
+        }
+    }
 }
 impl From<ReportToCharge_> for ReportToCharge {
     fn from(value: ReportToCharge_) -> Self {
@@ -195,6 +209,21 @@ impl From<ReportToCharge_> for ReportToCharge {
             packet_type: PostgresqlPacketType::from_str(&value.packet_type).unwrap(),
             direction,
             num_bytes: value.num_bytes,
+        }
+    }
+}
+impl From<Report> for ReportToCharge {
+    fn from(value: Report) -> Self {
+        let num_bytes: Option<i32> = match value.packet_bytes {
+            Some(byte_arr) => i32::try_from(byte_arr.len()).ok(),
+            None => None,
+        };
+        return ReportToCharge {
+            report_id: value.report_id,
+            user_id: None,
+            packet_type: value.packet_type,
+            direction: value.direction,
+            num_bytes
         }
     }
 }
