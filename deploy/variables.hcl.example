@@ -1,2 +1,5 @@
 region = "us-east-1"
 postgres_password = "pw"
+vultr_api_key = ""
+vultr_plan_id = "vc2-1c-1gb"
+vultr_region = "ewr"
