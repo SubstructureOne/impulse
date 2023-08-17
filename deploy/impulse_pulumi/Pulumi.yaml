@@ -1,0 +1,9 @@
+name: impulse_pulumi
+description: Deploy impulse stack to vultr
+runtime:
+  name: python
+config:
+  instance_label: impulse
+  snapshot_id: 27dc3f45-dcaf-479c-85fc-8255f5f523a1
+  region: atl
+  plan: vc2-1c-1gb
