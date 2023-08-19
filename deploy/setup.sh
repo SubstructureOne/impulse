@@ -62,3 +62,6 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now envoy.service
 sudo systemctl enable --now prew.service
 sudo systemctl enable --now impulse.timer
+
+# modify firewall
+ufw allow 5432

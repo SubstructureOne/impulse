@@ -4,6 +4,10 @@ packer {
       version = ">= 1.2.6"
       source = "github.com/hashicorp/amazon"
     }
+    vultr = {
+      version = ">= 2.5.0"
+      source = "github.com/vultr/vultr"
+    }
   }
 }
 
@@ -16,6 +20,18 @@ variable "region" {
 }
 
 variable "postgres_password" {
+  type = string
+}
+
+variable "vultr_api_key" {
+  type = string
+}
+
+variable "vultr_plan_id" {
+  type = string
+}
+
+variable "vultr_region" {
   type = string
 }
 
@@ -54,8 +70,19 @@ source "amazon-ebs" "impulse" {
   }
 }
 
+source "vultr" "impulse" {
+  api_key              = "${var.vultr_api_key}"
+  os_id                = "1743"  # Ubuntu 22.04 LTS x64
+  plan_id              = "${var.vultr_plan_id}"
+  region_id            = "${var.vultr_region}"
+  snapshot_description = "impulse-dev"
+  state_timeout        = "10m"
+  ssh_username         = "root"
+}
+
 build {
-  sources = ["source.amazon-ebs.impulse"]
+#  sources = ["source.amazon-ebs.impulse"]
+  sources = ["source.vultr.impulse"]
 
   provisioner "shell" {
     inline = [

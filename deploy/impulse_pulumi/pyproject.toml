@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "impulse-pulumi"
+version = "0.1.0"
+description = ""
+authors = ["dek <dek@substructure.one>"]
+readme = "README.md"
+packages = [{include = "impulse_pulumi"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ediri-vultr = "^2.15.1"
+pulumi = "^3.78.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
