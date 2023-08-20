@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use anyhow::{Context, Result};
 use clap::Parser;
+use log::info;
 
 use impulse::manage::ManagementConfig;
 use impulse::manage::postgres::PostgresManager;
@@ -19,6 +20,8 @@ pub struct SetupDatabaseArgs {
     host: Option<String>,
     #[arg(short, long)]
     username: Option<String>,
+    #[arg(long)]
+    dryrun: bool,
 }
 
 #[tokio::main]
@@ -37,7 +40,11 @@ async fn main() -> Result<()> {
         args.password.or(env::var("MANAGED_DB_PASSWORD").ok())
             .context("Password not provided")?,
     ));
-    let manager = PostgresManager::new(config.clone());
-    manager.setup_database()?;
+    if args.dryrun {
+        info!("Would have initialized database with params {:?}", &config);
+    } else {
+        let manager = PostgresManager::new(config.clone());
+        manager.setup_database()?;
+    }
     Ok(())
 }

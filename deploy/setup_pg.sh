@@ -33,7 +33,9 @@ fi
 
 # configure managed postgres
 if [[ "${POSTGRES_PURPOSE}" == "managed" ]]; then
-  ./release/setup_database --host localhost
+  pushd image_files
+  ../release/setup_database --host localhost
+  popd
 fi
 
 # modify firewall
