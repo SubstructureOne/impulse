@@ -1,0 +1,1 @@
+packer build -var-file=variables.hcl -var 'postgres_purpose=managed' postgresql.pkr.hcl

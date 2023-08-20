@@ -2,14 +2,14 @@ use std::sync::Arc;
 use std::env;
 use std::fs;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Parser;
 use futures::lock::Mutex;
 use log::info;
 use prew::{PacketRules, RewriteReverseProxy, RuleSetProcessor};
 use serde::{Serialize, Deserialize};
 
-use impulse::prew::{AppendUserNameTransformer, Context, ImpulseReporter};
+use impulse::prew::{AppendUserNameTransformer, ImpulseReporter};
 
 
 #[derive(Debug, Parser)]
@@ -58,10 +58,11 @@ pub async fn main() -> Result<()> {
     let transformer = AppendUserNameTransformer::new();
     let encoder = prew::MessageEncoder::new();
     let reporter = ImpulseReporter::new();
-    let report_connstr = args.report_connstr.unwrap_or_else(|| env::var("DATABASE_URL").unwrap());
-    let server_addr = args.server_addr.unwrap_or_else(|| env::var("KESTREL_DATABASE_URL").unwrap());
+    let report_connstr = args.report_connstr.or(env::var("DATABASE_URL").ok()).unwrap();
+        // .context("No impulse database connection string specified")?;
+    let server_addr = args.server_addr.context("No server address specified")?;
     let create_context = move || {
-        Context::new(report_connstr.clone()).unwrap()
+        impulse::prew::Context::new(report_connstr.clone()).unwrap()
     };
     let prew_rules = RuleSetProcessor::new(
         &parser,
@@ -74,7 +75,7 @@ pub async fn main() -> Result<()> {
     let processor = Arc::new(Mutex::new(prew_rules));
     let mut proxy = RewriteReverseProxy::new();
     let packet_rules = PacketRules {
-        bind_addr: args.bind_addr.unwrap(),
+        bind_addr: args.bind_addr.context("Bind address not specified")?,
         server_addr,
         processor,
     };
