@@ -1,2 +1,12 @@
 config:
-  instance_label: impulse-dev
+  region: atl
+  impulse_snapshot_id: fb2e076b-e818-4b16-aa63-5258219a4c8c
+  impulse_plan: vc2-1c-1gb
+  impulse_instance_label: impulse
+  managed_snapshot_id: 4e21bfdf-10ad-4249-92b6-5e8705718708
+  managed_plan: vc2-1c-1gb
+  managed_instance_label: managed_pg
+  impulse_pg_snapshot_id: 13d6ee3a-6110-4fea-9ed8-a38f5767ae30
+  impulse_pg_plan: vc2-1c-1gb
+  impulse_pg_instance_label: impulse_pg
+

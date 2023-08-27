@@ -35,12 +35,16 @@ variable "vultr_region" {
   type = string
 }
 
+variable "snapshot_name" {
+  type = string
+}
+
 source "vultr" "impulse" {
   api_key              = "${var.vultr_api_key}"
   os_id                = "1743"  # Ubuntu 22.04 LTS x64
   plan_id              = "${var.vultr_plan_id}"
   region_id            = "${var.vultr_region}"
-  snapshot_description = "impulse-dev"
+  snapshot_description = "${var.snapshot_name}-${local.timestamp}"
   state_timeout        = "10m"
   ssh_username         = "root"
 }

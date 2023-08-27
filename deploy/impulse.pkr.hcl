@@ -35,6 +35,10 @@ variable "vultr_region" {
   type = string
 }
 
+variable "snapshot_name" {
+  type = string
+}
+
 data "amazon-ami" "impulse" {
   filters = {
     architecture = "x86_64"
@@ -75,7 +79,7 @@ source "vultr" "impulse" {
   os_id                = "1743"  # Ubuntu 22.04 LTS x64
   plan_id              = "${var.vultr_plan_id}"
   region_id            = "${var.vultr_region}"
-  snapshot_description = "impulse-dev"
+  snapshot_description = "${var.snapshot_name}-${local.timestamp}"
   state_timeout        = "10m"
   ssh_username         = "root"
 }
