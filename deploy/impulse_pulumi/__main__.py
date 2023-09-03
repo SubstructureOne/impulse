@@ -58,6 +58,16 @@ EOT
     managed_inst.main_ip,
     impulse_inst.main_ip,
 )
+prew_toml_write_cmd = pulumi.Output.format(
+    """
+cat <<EOT >/opt/impulse/etc/prew.toml
+bind_addr = "0.0.0.0:6432"
+server_addr = "{}:5432"
+EOT
+systemctl restart prew
+""",
+    managed_inst.main_ip,
+)
 connection = pulumi_command.remote.ConnectionArgs(
     host=impulse_inst.main_ip,
     user="root",
@@ -67,6 +77,11 @@ pulumi_command.remote.Command(
     "write_env_file",
     connection=connection,
     create=dotenv_write_cmd,
+)
+pulumi_command.remote.Command(
+    "write_prewtoml",
+    connection=connection,
+    create=prew_toml_write_cmd,
 )
 
 pulumi.export('impulse_instance_id', impulse_inst.id)
