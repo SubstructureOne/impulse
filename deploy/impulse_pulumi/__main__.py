@@ -67,7 +67,7 @@ impulse_pg_inst = vultr.Instance(
 # Reminder, "{{" in an f-string (or to Output.format) becomes the literal "{",
 # and likewise "}}" becomes "}". In the following, {blah} is passed to and
 # formatted by Pulumi when the outputs are known, and {{blah}} is written
-# verbatimto the output file as "{blah}", where "${blah}" is then processed by
+# verbatim to the output file as "{blah}", where "${blah}" is then processed by
 # the library reading the .env file.
 dotenv_write_cmd = pulumi.Output.format(
     """
