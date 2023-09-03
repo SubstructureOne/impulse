@@ -45,6 +45,7 @@ fn parse_config(config_file: Option<String>) -> Result<Option<PrewConfig>> {
 #[tokio::main]
 pub async fn main() -> Result<()> {
     env_logger::init();
+    dotenvy::dotenv().ok();
     let mut args = PrewArgs::parse();
     let opt_config = parse_config(args.config_file)?;
     if let Some(config) = opt_config {
