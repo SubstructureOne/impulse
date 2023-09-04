@@ -59,8 +59,8 @@ pub async fn main() -> Result<()> {
     let transformer = AppendUserNameTransformer::new();
     let encoder = prew::MessageEncoder::new();
     let reporter = ImpulseReporter::new();
-    let report_connstr = args.report_connstr.or(env::var("DATABASE_URL").ok()).unwrap();
-        // .context("No impulse database connection string specified")?;
+    let report_connstr = args.report_connstr.or(env::var("DATABASE_URL").ok())
+        .context("No impulse database connection string specified")?;
     let server_addr = args.server_addr.context("No server address specified")?;
     let create_context = move || {
         impulse::prew::Context::new(report_connstr.clone()).unwrap()

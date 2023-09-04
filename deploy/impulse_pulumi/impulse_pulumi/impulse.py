@@ -31,11 +31,14 @@ class ImpulseInstance:
             user="root",
             private_key=private_key,
         )
-        # Reminder, "{{" in an f-string (or to Output.format) becomes the literal "{",
+        # "{{" in an f-string (or to Output.format) becomes the literal "{",
         # and likewise "}}" becomes "}". In the following, {blah} is passed to and
         # formatted by Pulumi when the outputs are known, and {{blah}} is written
         # verbatim to the output file as "{blah}", where "${blah}" is then processed by
         # the library reading the .env file.
+        # Because this is written using a shell environment, the ${...} variable
+        # references also need to be escaped to prevent attempting to interpolate
+        # them at write-time.
         dotenv_write_cmd = pulumi.Output.format(
             """
 cat <<EOT >/opt/impulse/bin/.env
@@ -91,16 +94,6 @@ systemctl restart prew
             ),
             pulumi.ResourceOptions(depends_on=[create_tarball])
         )
-        # pulumi_command.remote.Command(
-        #     "migrate_database",
-        #     pulumi_command.remote.CommandArgs(
-        #         connection=connection,
-        #         create="""bash -c "cd /opt/impulse/bin; tar xzvf migrations.tar.gz && /root/.cargo/bin/diesel migration run && rm -rf migrations/" """,
-        #     ),
-        #     pulumi.ResourceOptions(
-        #         depends_on=[write_env, copy_tarball],
-        #     )
-        # )
         copy_deploy_script = pulumi_command.remote.CopyFile(
             "copy_deploy_impulse",
             connection=connection,

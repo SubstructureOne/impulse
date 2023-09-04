@@ -14,13 +14,12 @@ sudo systemctl stop postgresql
 sudo systemctl disable postgresql
 
 # install diesel_cli
+# FIXME: overkill to install rust and compile just to get this one binary.
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > install_rustup.sh
 chmod +x install_rustup.sh
 ./install_rustup.sh -y
 source "$HOME/.cargo/env"
 cargo install diesel_cli --no-default-features --features postgres
-#cp image_files/.env .
-#diesel migration run
 
 sudo mkdir -p /opt/impulse/bin
 sudo mkdir /opt/impulse/etc
@@ -37,8 +36,6 @@ sudo chown -R root:root /opt/envoy/
 
 # install impulse binaries
 sudo mv release/* /opt/impulse/bin/
-#sudo cp image_files/.env /opt/impulse/bin/
-sudo cp image_files/prew.toml /opt/impulse/etc
 sudo chown -R root:root /opt/impulse/
 
 # generate self-signed certificate for envoy to use for SSL connections
@@ -53,9 +50,6 @@ sudo chown -R prew:prew /etc/ssl/private/
 # are defined, so don't start them yet.
 sudo cp image_files/envoy.service image_files/impulse.service image_files/impulse.timer image_files/prew.service /etc/systemd/system/
 sudo systemctl daemon-reload
-#sudo systemctl enable --now envoy.service
-#sudo systemctl enable --now prew.service
-#sudo systemctl enable --now impulse.timer
 
 # modify firewall to allow connections to prew
 ufw allow 5432
