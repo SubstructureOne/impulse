@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pulumi
 import pulumi_command
+import pulumi_random
 import ediri_vultr as vultr
 
 from .network import KestrelNetwork
@@ -23,7 +24,12 @@ class ManagedPgInstance:
             vpc_ids=[network.vpc.id],
             firewall_group_id=network.private_firewall.id,
         )
-        self.password = pulumi.Output.secret(secrets.token_urlsafe(16))
+        self.password = pulumi_random.RandomPassword(
+            "managed_pg_password",
+            length=16,
+            numeric=True,
+            special=False,
+        )
         self.connection = pulumi_command.remote.ConnectionArgs(
             host=self.instance.main_ip,
             user="root",
@@ -34,22 +40,28 @@ class ManagedPgInstance:
             connection=self.connection,
             create=pulumi.Output.format(
                 """sudo -u postgres psql -c "ALTER ROLE postgres PASSWORD '{0}'" """,
-                self.password
+                self.password.result
             )
         )
         postgresql_conf = pulumi_command.remote.CopyFile(
             resource_name="managed_pg_postgresql_conf",
             connection=self.connection,
-            local_path="postgresql.conf",
+            local_path="deploy_files/postgresql.conf",
             remote_path="/etc/postgresql/14/main/postgresql.conf",
+        )
+        pg_hba_conf = pulumi_command.remote.CopyFile(
+            resource_name="managed_pg_hba_conf",
+            connection=self.connection,
+            local_path="deploy_files/pg_hba.conf",
+            remote_path="/etc/postgresql/14/main/pg_hba.conf",
         )
         pulumi_command.remote.Command(
             "restart_managed_postgresql",
             pulumi_command.remote.CommandArgs(
                 connection=self.connection,
-                create="systemctl restart postgresql"
+                create="""bash -c "ufw allow 5432 && systemctl restart postgresql" """
             ),
-            pulumi.ResourceOptions(depends_on=[setpass, postgresql_conf]),
+            pulumi.ResourceOptions(depends_on=[setpass, postgresql_conf, pg_hba_conf]),
         )
 
 
@@ -68,7 +80,12 @@ class ImpulsePgInstance:
             vpc_ids=[network.vpc.id],
             firewall_group_id=network.private_firewall.id,
         )
-        self.password = pulumi.Output.secret(secrets.token_urlsafe(16))
+        self.password = pulumi_random.RandomPassword(
+            "impulse_pg_password",
+            length=16,
+            numeric=True,
+            special=False,
+        )
         self.connection = pulumi_command.remote.ConnectionArgs(
             host=self.instance.main_ip,
             user="root",
@@ -79,7 +96,7 @@ class ImpulsePgInstance:
             connection=self.connection,
             create=pulumi.Output.format(
                 """sudo -u postgres psql -c "ALTER ROLE postgres PASSWORD '{0}'" """,
-                self.password
+                self.password.result,
             )
         )
         postgresql_conf = pulumi_command.remote.CopyFile(
@@ -88,11 +105,17 @@ class ImpulsePgInstance:
             local_path="postgresql.conf",
             remote_path="/etc/postgresql/14/main/postgresql.conf",
         )
+        pg_hba_conf = pulumi_command.remote.CopyFile(
+            resource_name="impulse_pg_hba_conf",
+            connection=self.connection,
+            local_path="pg_hba.conf",
+            remote_path="/etc/postgresql/14/main/pg_hba.conf",
+        )
         pulumi_command.remote.Command(
             "restart_impulse_postgresql",
             pulumi_command.remote.CommandArgs(
                 connection=self.connection,
-                create="systemctl restart postgresql"
+                create="""bash -c "ufw allow 5432 && systemctl restart postgresql" """
             ),
-            pulumi.ResourceOptions(depends_on=[setpass, postgresql_conf]),
+            pulumi.ResourceOptions(depends_on=[setpass, postgresql_conf, pg_hba_conf]),
         )

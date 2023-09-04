@@ -8,6 +8,7 @@ Type=oneshot
 User=prew
 ExecStart=/opt/impulse/bin/impulse --generate-charges --generate-transactions --process-timecharges --compute-storage --sync-users
 Environment=RUST_LOG=trace
+WorkingDirectory=/opt/impulse/bin/
 
 [Install]
 WantedBy=multi-user.target

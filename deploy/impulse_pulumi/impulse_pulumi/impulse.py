@@ -1,3 +1,5 @@
+import os
+import os.path
 import pulumi
 import pulumi_command
 import ediri_vultr as vultr
@@ -36,22 +38,22 @@ class ImpulseInstance:
         # the library reading the .env file.
         dotenv_write_cmd = pulumi.Output.format(
             """
-        cat <<EOT >/opt/impulse/bin/.env
-        MANAGED_DB_HOST={0}
-        MANAGED_DB_PORT=5432
-        MANAGED_DB_USER=postgres
-        MANAGED_DB_PASSWORD={1}
-        KESTREL_DB_HOST={{2}}
-        KESTREL_DB_PORT=5432
-        KESTREL_DB_USER=postgres
-        KESTREL_DB_PASSWORD={3}
-        DATABASE_URL=postgres://${{MANAGED_DB_USER}}:${{MANAGED_DB_PASSWORD}}@${{MANAGED_DB_HOST}}:${{MANAGED_DB_PORT}}/impulse
-        EOT
+cat <<EOT >/opt/impulse/bin/.env
+MANAGED_DB_HOST={0}
+MANAGED_DB_PORT=5432
+MANAGED_DB_USER=postgres
+MANAGED_DB_PASSWORD={1}
+KESTREL_DB_HOST={2}
+KESTREL_DB_PORT=5432
+KESTREL_DB_USER=postgres
+KESTREL_DB_PASSWORD={3}
+DATABASE_URL=postgres://\\${{KESTREL_DB_USER}}:\\${{KESTREL_DB_PASSWORD}}@\\${{KESTREL_DB_HOST}}:\\${{KESTREL_DB_PORT}}/impulse
+EOT
         """,
             managed_inst.instance.internal_ip,
-            managed_inst.password,
+            managed_inst.password.result,
             impulse_pg_inst.instance.internal_ip,
-            impulse_pg_inst.password,
+            impulse_pg_inst.password.result,
         )
         write_env = pulumi_command.remote.Command(
             "write_env_file",
@@ -60,12 +62,12 @@ class ImpulseInstance:
         )
         prew_toml_write_cmd = pulumi.Output.format(
             """
-        cat <<EOT >/opt/impulse/etc/prew.toml
-        bind_addr = "0.0.0.0:6432"
-        server_addr = "{}:5432"
-        EOT
-        systemctl restart prew
-        """,
+cat <<EOT >/opt/impulse/etc/prew.toml
+bind_addr = "0.0.0.0:6432"
+server_addr = "{}:5432"
+EOT
+systemctl restart prew
+""",
             managed_inst.instance.internal_ip,
         )
         pulumi_command.remote.Command(
@@ -74,13 +76,44 @@ class ImpulseInstance:
             create=prew_toml_write_cmd,
         )
         # run migration
+        tarball_path = os.path.join(os.getcwd(), "migrations.tar.gz")
+        migrations_dir_rel = "../.."
+        create_tarball = pulumi_command.local.Command(
+            "create_migration_tarball",
+            create=f"""bash -c "pushd {migrations_dir_rel}; tar czvf {tarball_path} migrations/" """
+        )
+        copy_tarball = pulumi_command.remote.CopyFile(
+            "copy_migrations_tarball",
+            pulumi_command.remote.CopyFileArgs(
+                connection=connection,
+                local_path=tarball_path,
+                remote_path="/opt/impulse/bin/migrations.tar.gz",
+            ),
+            pulumi.ResourceOptions(depends_on=[create_tarball])
+        )
         # pulumi_command.remote.Command(
         #     "migrate_database",
         #     pulumi_command.remote.CommandArgs(
         #         connection=connection,
-        #         create="env --chdir=/opt/impulse/bin diesel migration run",
+        #         create="""bash -c "cd /opt/impulse/bin; tar xzvf migrations.tar.gz && /root/.cargo/bin/diesel migration run && rm -rf migrations/" """,
         #     ),
         #     pulumi.ResourceOptions(
-        #         depends_on=[write_env],
+        #         depends_on=[write_env, copy_tarball],
         #     )
         # )
+        copy_deploy_script = pulumi_command.remote.CopyFile(
+            "copy_deploy_impulse",
+            connection=connection,
+            local_path="deploy_files/deploy_impulse.sh",
+            remote_path="/root/deploy_impulse.sh",
+        )
+        pulumi_command.remote.Command(
+            "run_deploy_impulse",
+            pulumi_command.remote.CommandArgs(
+                connection=connection,
+                create="bash /root/deploy_impulse.sh",
+            ),
+            pulumi.ResourceOptions(
+                depends_on=[copy_deploy_script, copy_tarball]
+            )
+        )

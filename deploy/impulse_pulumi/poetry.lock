@@ -205,6 +205,22 @@ pulumi = ">=3.0.0,<4.0.0"
 semver = ">=2.8.1"
 
 [[package]]
+name = "pulumi-random"
+version = "4.13.2"
+description = "A Pulumi package to safely use randomness in Pulumi programs."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pulumi_random-4.13.2.tar.gz", hash = "sha256:072097800e4e4cc499ee4ab1bdfb38559ad50bfd5a2a3bee43fad9f57d91ec55"},
+]
+
+[package.dependencies]
+parver = ">=0.2.1"
+pulumi = ">=3.0.0,<4.0.0"
+semver = ">=2.8.1"
+
+[[package]]
 name = "pyyaml"
 version = "6.0.1"
 description = "YAML parser and emitter for Python"
@@ -281,4 +297,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "8dc75fbefd5527d7d3e875d5c92ffc3363077857a6bbeaf7879f42df51cc47f4"
+content-hash = "883ac7ca7c8518ffa72e8ad2da9c98bb1c89b7a6070b84d30edbd56746746ed4"

@@ -5,10 +5,6 @@ config:
   impulse_pulumi:impulse_pg_snapshot_id: 13d6ee3a-6110-4fea-9ed8-a38f5767ae30
   impulse_pulumi:impulse_plan: vhp-1c-1gb-amd
   impulse_pulumi:impulse_snapshot_id: 25ba49cc-9bb0-4ac6-b9e8-743634157338
-  impulse_pulumi:kestrel_db_password:
-    secure: AAABABZDOQMGm6365WW72CqH463EbkjRBsXBBENVjVhrk1NiX7FY8pccB3xifw==
-  impulse_pulumi:managed_db_password:
-    secure: AAABAKGvaVYZSxqTIjICMER2eqUSkkO3nF/xLKnqVHHg+E7J+rbjYVcoAyx1yw==
   impulse_pulumi:managed_pg_instance_label: managed_pg
   impulse_pulumi:managed_pg_plan: vhp-1c-1gb-amd
   impulse_pulumi:managed_snapshot_id: 4e21bfdf-10ad-4249-92b6-5e8705718708

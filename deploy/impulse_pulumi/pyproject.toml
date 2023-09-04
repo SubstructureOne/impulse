@@ -11,6 +11,7 @@ python = "^3.10"
 ediri-vultr = "^2.15.1"
 pulumi = "^3.78.1"
 pulumi-command = "^0.8.2"
+pulumi-random = "^4.13.2"
 
 
 [build-system]
