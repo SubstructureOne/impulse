@@ -26,7 +26,7 @@ variable "vultr_ssh_key_id" {
 source "vultr" "impulse" {
   api_key              = "${var.vultr_api_key}"
   os_id                = "1743"  # Ubuntu 22.04 LTS x64
-  plan_id              = "vc2-1c-1gb"
+  plan_id              = "vhp-1c-1gb-amd"
   region_id            = "${var.vultr_region}"
   snapshot_description = "base-${local.timestamp}"
   state_timeout        = "10m"

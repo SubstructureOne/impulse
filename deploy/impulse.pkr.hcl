@@ -1,9 +1,5 @@
 packer {
   required_plugins {
-    amazon = {
-      version = ">= 1.2.6"
-      source = "github.com/hashicorp/amazon"
-    }
     vultr = {
       version = ">= 2.5.0"
       source = "github.com/vultr/vultr"
@@ -14,20 +10,7 @@ packer {
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
 }
-
-variable "region" {
-  type = string
-}
-
-variable "postgres_password" {
-  type = string
-}
-
 variable "vultr_api_key" {
-  type = string
-}
-
-variable "vultr_plan_id" {
   type = string
 }
 
@@ -35,57 +18,26 @@ variable "vultr_region" {
   type = string
 }
 
-variable "snapshot_name" {
+variable "base_snapshot_id" {
   type = string
 }
 
-data "amazon-ami" "impulse" {
-  filters = {
-    architecture = "x86_64"
-    "block-device-mapping.volume-type" = "gp2"
-    name = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
-    root-device-type = "ebs"
-    virtualization-type = "hvm"
-  }
-  most_recent = true
-  owners = ["099720109477"]
-  region = var.region
-}
-
-source "amazon-ebs" "impulse" {
-  ami_name = "impulse-${local.timestamp}"
-  instance_type = "t2.micro"
-  region = var.region
-  source_ami = "${data.amazon-ami.impulse.id}"
-  ssh_username = "ubuntu"
-
-  tags = {
-    Name = "impulse-ami"
-    OS = "Ubuntu"
-    Release = "22.04"
-    Base_AMI_ID = "{{ .SourceAMI }}"
-    Base_AMI_Name = "{{ .SourceAMIName }}"
-  }
-
-  snapshot_tags = {
-    Name = "impulse-ami-snapshot"
-    source = "hashicorp/learn"
-    purpose = "demo"
-  }
+variable "ssh_key_file" {
+  type = string
 }
 
 source "vultr" "impulse" {
   api_key              = "${var.vultr_api_key}"
-  os_id                = "1743"  # Ubuntu 22.04 LTS x64
-  plan_id              = "${var.vultr_plan_id}"
+  snapshot_id          = "${var.base_snapshot_id}"
+  plan_id              = "vhp-1c-1gb-amd"
   region_id            = "${var.vultr_region}"
-  snapshot_description = "${var.snapshot_name}-${local.timestamp}"
+  snapshot_description = "impulse-${local.timestamp}"
   state_timeout        = "10m"
   ssh_username         = "root"
+  ssh_private_key_file = "${var.ssh_key_file}"
 }
 
 build {
-#  sources = ["source.amazon-ebs.impulse"]
   sources = ["source.vultr.impulse"]
 
   provisioner "shell" {
@@ -117,9 +69,6 @@ build {
   }
 
   provisioner "shell" {
-    script = "./setup.sh"
-    environment_vars = [
-      "POSTGRES_PASSWORD=${var.postgres_password}"
-    ]
+    script = "./setup_impulse.sh"
   }
 }
