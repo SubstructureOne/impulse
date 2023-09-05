@@ -1,15 +1,7 @@
-"""Pulumi configuration for deploy Impulse"""
-
+"""Pulumi configuration for deploying Impulse"""
 import pulumi
-import ediri_vultr as vultr
+
+from impulse_pulumi.stack import Stack
 
 config = pulumi.Config()
-impulse_inst = vultr.Instance(
-    "impulse-dev",
-    snapshot_id=config.require("snapshot_id"),
-    region=config.require("region"),
-    plan=config.require("plan"),
-    label=config.require("instance_label"),
-)
-
-pulumi.export('instance_id', impulse_inst.id)
+stack = Stack(config)

@@ -10,7 +10,24 @@ packer {
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
 }
+
+variable "region" {
+  type = string
+}
+
+variable "postgres_password" {
+  type = string
+}
+
+variable "postgres_purpose" {
+  type = string
+}
+
 variable "vultr_api_key" {
+  type = string
+}
+
+variable "vultr_plan_id" {
   type = string
 }
 
@@ -18,23 +35,18 @@ variable "vultr_region" {
   type = string
 }
 
-variable "base_snapshot_id" {
-  type = string
-}
-
-variable "ssh_key_file" {
+variable "snapshot_name" {
   type = string
 }
 
 source "vultr" "impulse" {
   api_key              = "${var.vultr_api_key}"
-  snapshot_id          = "${var.base_snapshot_id}"
-  plan_id              = "vhp-1c-1gb-amd"
+  os_id                = "1743"  # Ubuntu 22.04 LTS x64
+  plan_id              = "${var.vultr_plan_id}"
   region_id            = "${var.vultr_region}"
-  snapshot_description = "impulse-${local.timestamp}"
+  snapshot_description = "${var.snapshot_name}-${local.timestamp}"
   state_timeout        = "10m"
   ssh_username         = "root"
-  ssh_private_key_file = "${var.ssh_key_file}"
 }
 
 build {
@@ -49,8 +61,6 @@ build {
 
   provisioner "file" {
     sources = [
-      "../target/release/impulse",
-      "../target/release/prew",
       "../target/release/setup_database"
     ]
     destination = "/setup/release/"
@@ -69,6 +79,10 @@ build {
   }
 
   provisioner "shell" {
-    script = "./setup_impulse.sh"
+    script = "./setup_pg.sh"
+    environment_vars = [
+      "POSTGRES_PASSWORD=${var.postgres_password}",
+      "POSTGRES_PURPOSE=${var.postgres_purpose}"
+    ]
   }
 }

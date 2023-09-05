@@ -9,26 +9,17 @@ ENVOYDOWNLOAD="https://github.com/envoyproxy/envoy/releases/download/v1.26.3/env
 # wait for cloud-init to finish
 /usr/bin/cloud-init status --wait
 
-# install prerequisites
-sudo apt update
-sudo apt install -y libpq-dev postgresql-14
-# diesel requirements
-sudo apt install -y build-essential libmysqlclient-dev libsqlite3-dev
+# disable postgres
+sudo systemctl stop postgresql
+sudo systemctl disable postgresql
 
-# setup postgres
-sudo -u postgres psql -c "ALTER ROLE postgres PASSWORD '${POSTGRES_PASSWORD}'"
-sudo -u postgres psql -c "CREATE DATABASE impulse"
-sudo cp image_files/postgresql.conf /etc/postgresql/14/main/postgresql.conf
-sudo systemctl restart postgresql
-
-# database migration
+# install diesel_cli
+# FIXME: overkill to install rust and compile just to get this one binary.
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > install_rustup.sh
 chmod +x install_rustup.sh
 ./install_rustup.sh -y
 source "$HOME/.cargo/env"
-cargo install diesel_cli
-cp image_files/.env .
-diesel migration run
+cargo install diesel_cli --no-default-features --features postgres
 
 sudo mkdir -p /opt/impulse/bin
 sudo mkdir /opt/impulse/etc
@@ -45,8 +36,6 @@ sudo chown -R root:root /opt/envoy/
 
 # install impulse binaries
 sudo mv release/* /opt/impulse/bin/
-sudo cp image_files/.env /opt/impulse/bin/
-sudo cp image_files/prew.toml /opt/impulse/etc
 sudo chown -R root:root /opt/impulse/
 
 # generate self-signed certificate for envoy to use for SSL connections
@@ -57,11 +46,10 @@ sudo cp ssl-cert.pem /etc/ssl/certs/
 sudo chown -R prew:prew /etc/ssl/private/
 
 # install systemd services
+# These services cannot be fully configured until the deployment specifics
+# are defined, so don't start them yet.
 sudo cp image_files/envoy.service image_files/impulse.service image_files/impulse.timer image_files/prew.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now envoy.service
-sudo systemctl enable --now prew.service
-sudo systemctl enable --now impulse.timer
 
-# modify firewall
+# modify firewall to allow connections to prew
 ufw allow 5432
