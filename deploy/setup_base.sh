@@ -3,6 +3,8 @@ set -euxo pipefail
 # wait for cloud-init to finish
 /usr/bin/cloud-init status --wait
 
+passwd --delete ubuntu
+
 apt update
 apt install -y libpq-dev postgresql-14 build-essential
 # !!!

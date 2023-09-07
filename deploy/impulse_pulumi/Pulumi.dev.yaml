@@ -11,3 +11,4 @@ config:
   impulse_pulumi:region: atl
   impulse_pulumi:base_snapshot_id: f9aa61e8-183a-4a12-89bd-b7ec38fc96f6
   impulse_pulumi:ssh_key_path: /home/david/.ssh/id_ed25519_vultr2
+  impulse_pulumi:site_plan: vhp-1c-1gb-amd
