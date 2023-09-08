@@ -1,3 +1,4 @@
+import os.path
 from pathlib import Path
 
 import pulumi
@@ -33,11 +34,21 @@ class SiteInstance:
             local_path="deploy_files/nginx_default",
             remote_path="/home/ubuntu/nginx_default",
         )
+        copy_service = pulumi_command.remote.CopyFile(
+            "copy_kestrelsite_service",
+            connection=self.connection_root,
+            local_path="deploy_files/kestrelsite.service",
+            remote_path="/home/ubuntu/kestrelsite.service",
+            triggers=[os.path.getmtime("deploy_files/kestrelsite.service")],
+        )
         copy_setup = pulumi_command.remote.CopyFile(
             "copy_site_setup",
-            connection=self.connection,
-            local_path="deploy_files/deploy_website.sh",
-            remote_path="/home/ubuntu/deploy_website.sh",
+            pulumi_command.remote.CopyFileArgs(
+                connection=self.connection,
+                local_path="deploy_files/deploy_website.sh",
+                remote_path="/home/ubuntu/deploy_website.sh",
+                triggers=[os.path.getmtime("deploy_files/deploy_website.sh")],
+            ),
         )
         pulumi_command.remote.Command(
             "configure_site",
@@ -45,5 +56,8 @@ class SiteInstance:
                 connection=self.connection,
                 create="bash /home/ubuntu/deploy_website.sh",
             ),
-            pulumi.ResourceOptions(depends_on=[copy_nginx, copy_setup])
+            pulumi.ResourceOptions(
+                depends_on=[copy_nginx, copy_setup],
+                parent=copy_setup,
+            )
         )
