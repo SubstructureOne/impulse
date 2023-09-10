@@ -2,8 +2,6 @@
 
 set -euxo pipefail
 
-sudo apt install -y nginx
-
 wget https://nodejs.org/dist/v18.17.1/node-v18.17.1-linux-x64.tar.xz
 tar xvf node-v18.17.1-linux-x64.tar.xz
 rm -rf node

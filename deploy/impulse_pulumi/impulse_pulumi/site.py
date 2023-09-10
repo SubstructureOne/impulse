@@ -58,7 +58,7 @@ class SiteInstance:
         )
         write_env_command = pulumi.Output.format(
             """
-cat <<EOT >/home/ubuntu/kestrelsite/.env
+cat <<EOT >/home/ubuntu/kestrelsite/.env.local
 NEXT_PUBLIC_SUPABASE_URL={0}
 NEXT_PUBLIC_SUPABASE_ANON_KEY={1}
 NEXT_PUBLIC_PREVIEW_MODE_DISABLED=1
@@ -82,7 +82,7 @@ EOT
             config.require("stripe_webhook_secret"),
             config.require("stripe_fund_price_id"),
             config.require("stripe_fund_success_url"),
-            config.require("stripe_func_cancel_url"),
+            config.require("stripe_fund_cancel_url"),
 
         )
         write_env = pulumi_command.remote.Command(

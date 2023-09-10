@@ -12,7 +12,7 @@ class Stack:
         self.managed_pg = ManagedPgInstance(config, self.network)
         self.impulse_pg = ImpulsePgInstance(config, self.network)
         self.impulse = ImpulseInstance(config, self.network, self.managed_pg, self.impulse_pg)
-        self.site = SiteInstance(config, self.network)
+        self.site = SiteInstance(config, self.network, self.impulse_pg)
         pulumi.export("managed_pg_password", self.managed_pg.password.result)
         pulumi.export("managed_pg_publicip", self.managed_pg.instance.main_ip)
         pulumi.export("managed_pg_privateip", self.managed_pg.instance.internal_ip)
