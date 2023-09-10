@@ -6,10 +6,16 @@ import ediri_vultr as vultr
 import pulumi_command.remote
 
 from .network import KestrelNetwork
+from .postgres import ImpulsePgInstance
 
 
 class SiteInstance:
-    def __init__(self, config: pulumi.Config, network: KestrelNetwork):
+    def __init__(
+            self,
+            config: pulumi.Config,
+            network: KestrelNetwork,
+            impulse_pg_inst: ImpulsePgInstance,
+    ):
         self.instance = vultr.Instance(
             "site_inst",
             snapshot_id=config.require("base_snapshot_id"),
@@ -50,6 +56,40 @@ class SiteInstance:
                 triggers=[os.path.getmtime("deploy_files/deploy_website.sh")],
             ),
         )
+        write_env_command = pulumi.Output.format(
+            """
+cat <<EOT >/home/ubuntu/kestrelsite/.env
+NEXT_PUBLIC_SUPABASE_URL={0}
+NEXT_PUBLIC_SUPABASE_ANON_KEY={1}
+NEXT_PUBLIC_PREVIEW_MODE_DISABLED=1
+POSTGRES_HOST={2}
+POSTGRES_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD={3}
+POSTGRES_DATABASE=impulse
+STRIPE_SECRET_KEY={4}
+STRIPE_WEBHOOK_SECRET={5}
+STRIPE_FUND_ACCOUNT_PRICE_ID={6}
+STRIPE_FUND_ACCOUNT_SUCCESS_URL={7}
+STRIPE_FUND_ACCOUNT_CANCEL_URL={8}
+EOT
+            """,
+            config.require("supabase_url"),
+            config.require("supabase_anon_key"),
+            impulse_pg_inst.instance.internal_ip,
+            impulse_pg_inst.password.result,
+            config.require("stripe_secret_key"),
+            config.require("stripe_webhook_secret"),
+            config.require("stripe_fund_price_id"),
+            config.require("stripe_fund_success_url"),
+            config.require("stripe_func_cancel_url"),
+
+        )
+        write_env = pulumi_command.remote.Command(
+            "write_kestrelsite_env_file",
+            connection=self.connection,
+            create=write_env_command,
+        )
         pulumi_command.remote.Command(
             "configure_site",
             pulumi_command.remote.CommandArgs(
@@ -57,7 +97,7 @@ class SiteInstance:
                 create="bash /home/ubuntu/deploy_website.sh",
             ),
             pulumi.ResourceOptions(
-                depends_on=[copy_nginx, copy_setup],
+                depends_on=[copy_nginx, copy_setup, write_env],
                 parent=copy_setup,
             )
         )
