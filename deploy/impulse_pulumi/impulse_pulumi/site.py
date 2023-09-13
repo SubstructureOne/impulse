@@ -91,9 +91,9 @@ EOT
             config.require("supabase_anon_key"),
             impulse_pg_inst.instance.internal_ip,
             impulse_pg_inst.password.result,
-            config.require("stripe_secret_key"),
-            config.require("stripe_webhook_secret"),
-            config.require("stripe_fund_price_id"),
+            config.require_secret("stripe_secret_key"),
+            config.require_secret("stripe_webhook_secret"),
+            config.require_secret("stripe_fund_price_id"),
             config.require("stripe_fund_success_url"),
             config.require("stripe_fund_cancel_url"),
 
