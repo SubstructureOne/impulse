@@ -1,10 +1,10 @@
 config:
-  impulse_pulumi:base_snapshot_id: f9aa61e8-183a-4a12-89bd-b7ec38fc96f6
+  impulse_pulumi:base_snapshot_id: 730ff49e-0a54-4b00-bc80-956cd993b5fc
   impulse_pulumi:impulse_instance_label: impulse
   impulse_pulumi:impulse_pg_instance_label: impulse_pg
   impulse_pulumi:impulse_pg_plan: vhp-1c-1gb-amd
   impulse_pulumi:impulse_plan: vhp-1c-1gb-amd
-  impulse_pulumi:impulse_snapshot_id: 25ba49cc-9bb0-4ac6-b9e8-743634157338
+  impulse_pulumi:impulse_snapshot_id: d0fa7b52-c29a-4ddb-99ce-c36194bab838
   impulse_pulumi:managed_pg_instance_label: managed_pg
   impulse_pulumi:managed_pg_plan: vhp-1c-1gb-amd
   impulse_pulumi:region: atl

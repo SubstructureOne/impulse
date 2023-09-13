@@ -36,16 +36,26 @@ class SiteInstance:
         )
         copy_nginx = pulumi_command.remote.CopyFile(
             "copy_nginx_config",
-            connection=self.connection_root,
-            local_path="deploy_files/nginx_default",
-            remote_path="/home/ubuntu/nginx_default",
+            pulumi_command.remote.CopyFileArgs(
+                connection=self.connection_root,
+                local_path="deploy_files/nginx_default",
+                remote_path="/home/ubuntu/nginx_default",
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
         )
         copy_service = pulumi_command.remote.CopyFile(
             "copy_kestrelsite_service",
-            connection=self.connection_root,
-            local_path="deploy_files/kestrelsite.service",
-            remote_path="/home/ubuntu/kestrelsite.service",
-            triggers=[os.path.getmtime("deploy_files/kestrelsite.service")],
+            pulumi_command.remote.CopyFileArgs(
+                connection=self.connection_root,
+                local_path="deploy_files/kestrelsite.service",
+                remote_path="/home/ubuntu/kestrelsite.service",
+                triggers=[os.path.getmtime("deploy_files/kestrelsite.service")],
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
         )
         copy_setup = pulumi_command.remote.CopyFile(
             "copy_site_setup",
@@ -55,10 +65,13 @@ class SiteInstance:
                 remote_path="/home/ubuntu/deploy_website.sh",
                 triggers=[os.path.getmtime("deploy_files/deploy_website.sh")],
             ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
         )
         write_env_command = pulumi.Output.format(
             """
-cat <<EOT >/home/ubuntu/kestrelsite/.env.local
+cat <<EOT >/home/ubuntu/kestrelsite.env.local
 NEXT_PUBLIC_SUPABASE_URL={0}
 NEXT_PUBLIC_SUPABASE_ANON_KEY={1}
 NEXT_PUBLIC_PREVIEW_MODE_DISABLED=1
@@ -87,17 +100,23 @@ EOT
         )
         write_env = pulumi_command.remote.Command(
             "write_kestrelsite_env_file",
-            connection=self.connection,
-            create=write_env_command,
+            pulumi_command.remote.CommandArgs(
+                connection=self.connection,
+                create=write_env_command,
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
         )
         pulumi_command.remote.Command(
             "configure_site",
             pulumi_command.remote.CommandArgs(
                 connection=self.connection,
                 create="bash /home/ubuntu/deploy_website.sh",
+                triggers=[copy_setup],
             ),
             pulumi.ResourceOptions(
-                depends_on=[copy_nginx, copy_setup, write_env],
-                parent=copy_setup,
+                depends_on=[copy_nginx, copy_setup, write_env, impulse_pg_inst.configured],
+                parent=self.instance,
             )
         )

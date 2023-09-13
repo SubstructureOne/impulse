@@ -12,7 +12,12 @@ class KestrelNetwork:
             region=config.require("region")
         )
         self.top_domain = vultr.DnsDomain("kdeploy.com", domain="kdeploy.com")
-        self.private_firewall = vultr.FirewallGroup("vpc_private")
+        self.private_firewall = vultr.FirewallGroup(
+            "vpc_private",
+            vultr.FirewallGroupArgs(
+                description="Kestrel VPC"
+            ),
+        )
         # convert to form "192.168.0.0/255.255.255.0", which can be parsed by
         # ipaddress.IPv4Network
         subnet_str = pulumi.Output.format(
@@ -22,22 +27,46 @@ class KestrelNetwork:
         )
         vpc_subnet = subnet_str.apply(ipaddress.IPv4Network)
         vultr.FirewallRule(
-            firewall_group_id=self.private_firewall.id,
-            resource_name="pg_vpn_only",
-            protocol="tcp",
-            ip_type="v4",
-            subnet=self.vpc.v4_subnet,
-            subnet_size=vpc_subnet.prefixlen,
-            port="5432",
-            notes="allow PG connections only from VPC"
+            "pg_vpn_only",
+            vultr.FirewallRuleArgs(
+                firewall_group_id=self.private_firewall.id,
+                protocol="tcp",
+                ip_type="v4",
+                subnet=self.vpc.v4_subnet,
+                subnet_size=vpc_subnet.prefixlen,
+                port="5432",
+                notes="allow PG connections only from VPC",
+            ),
+            pulumi.ResourceOptions(
+                parent=self.private_firewall,
+            )
         )
         vultr.FirewallRule(
-            firewall_group_id=self.private_firewall.id,
-            resource_name="pg_allow_ssh_all",
-            protocol="tcp",
-            ip_type="v4",
-            subnet="0.0.0.0",
-            subnet_size=0,
-            port="22",
-            notes="allow SSH from any host",
+            "pg_allow_ssh_all",
+            vultr.FirewallRuleArgs(
+                firewall_group_id=self.private_firewall.id,
+                protocol="tcp",
+                ip_type="v4",
+                subnet="0.0.0.0",
+                subnet_size=0,
+                port="22",
+                notes="allow SSH from any host",
+            ),
+            pulumi.ResourceOptions(
+                parent=self.private_firewall,
+            )
+        )
+        vultr.FirewallRule(
+            "icmp_allow",
+            vultr.FirewallRuleArgs(
+                firewall_group_id=self.private_firewall.id,
+                protocol="icmp",
+                ip_type="v4",
+                subnet="0.0.0.0",
+                subnet_size=0,
+                notes="allow ICMP from any host",
+            ),
+            pulumi.ResourceOptions(
+                parent=self.private_firewall,
+            )
         )
