@@ -24,6 +24,18 @@ class SiteInstance:
             label="kesetrelsite",
             vpc_ids=[network.vpc.id],
         )
+        self.reserved_ip = vultr.ReservedIp(
+            "kestrel_site_ip",
+            vultr.ReservedIpArgs(
+                ip_type="v4",
+                region=config.require("region"),
+                instance_id=self.instance.id,
+                label="reserved kestrel site IPv4",
+            ),
+            pulumi.ResourceOptions(
+                protect=True,
+            )
+        )
         self.connection = pulumi_command.remote.ConnectionArgs(
             host=self.instance.main_ip,
             user="ubuntu",

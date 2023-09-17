@@ -24,6 +24,18 @@ class ImpulseInstance:
             label=config.require("impulse_instance_label"),
             vpc_ids=[network.vpc.id],
         )
+        self.reserved_ip = vultr.ReservedIp(
+            "impulse_ip",
+            vultr.ReservedIpArgs(
+                ip_type="v4",
+                region=config.require("region"),
+                instance_id=self.instance.id,
+                label="reserved impulse IPv4",
+            ),
+            pulumi.ResourceOptions(
+                protect=True,
+            )
+        )
         with open(config.require("ssh_key_path"), "r") as fp:
             private_key = fp.read()
         connection = pulumi_command.remote.ConnectionArgs(
