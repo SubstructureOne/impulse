@@ -23,6 +23,7 @@ class SiteInstance:
             plan=config.require("site_plan"),
             label="kesetrelsite",
             vpc_ids=[network.vpc.id],
+            firewall_group_id=network.public_firewall.id,
         )
         self.reserved_ip = vultr.ReservedIp(
             "kestrel_site_ip",

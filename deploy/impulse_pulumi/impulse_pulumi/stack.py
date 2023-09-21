@@ -27,7 +27,7 @@ class Stack:
         vultr.DnsRecord(
             "kestrel_site_dns",
             vultr.DnsRecordArgs(
-                data=self.impulse.instance.main_ip,
+                data=self.site.instance.main_ip,
                 domain=self.network.top_domain,
                 type="A",
                 name="site.dev",

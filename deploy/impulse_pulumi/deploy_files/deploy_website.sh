@@ -16,9 +16,13 @@ else
 fi
 cp ../kestrelsite.env.local .env.local
 NODE_PATH=/home/ubuntu/node PATH=$PATH:/home/ubuntu/node/bin /home/ubuntu/node/bin/npm install
+NODE_PATH=/home/ubuntu/node PATH=$PATH:/home/ubuntu/node/bin /home/ubuntu/node/bin/npm run build
 
 sudo cp /home/ubuntu/kestrelsite.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable kestrelsite --now
 sudo cp /home/ubuntu/nginx_default /etc/nginx/sites-available/default
 sudo systemctl restart nginx
+
+sudo ufw allow 80
+sudo ufw allow 443

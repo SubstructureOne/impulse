@@ -7,6 +7,8 @@ config:
   impulse_pulumi:impulse_snapshot_id: d0fa7b52-c29a-4ddb-99ce-c36194bab838
   impulse_pulumi:managed_pg_instance_label: managed_pg
   impulse_pulumi:managed_pg_plan: vhp-1c-1gb-amd
+  impulse_pulumi:public_ips:
+    - secure: AAABADsB5Q/H6bzF5V02UhFn6edaJUX6YZDS5fd6BIRipQZK95kehqo8HY4=
   impulse_pulumi:region: atl
   impulse_pulumi:site_plan: vhp-1c-1gb-amd
   impulse_pulumi:ssh_key_path:
@@ -21,3 +23,5 @@ config:
     secure: AAABAKut77l8rlbmPvTEo+cF0zzlJqXBhcRVtE+Fv9L0i3qddOvxXLhJUG4O2uiyRs3PX3i+pMdid0qNKTAB5uyT9akoH5AOoU6l1qZSOnaCQDzCuEE/gtY3z/3UwbhtqQlVYxRv
   impulse_pulumi:supabase_anon_key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indzd2pnYndhdGxzam9xemp2cWNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODI4ODQzMzgsImV4cCI6MTk5ODQ2MDMzOH0.aC1BmX_5ExiEb3uYq5AOgEgc0e1ZXW8DHbWq249Z4IA
   impulse_pulumi:supabase_url: https://wswjgbwatlsjoqzjvqcg.supabase.co
+  impulse_pulumi:trusted_ips:
+    - secure: AAABAH/QvEmXSm0YQKThQAsxrkOwEVHr7ZhXApBbxUMRKFjLKaFGFv8OCdo=

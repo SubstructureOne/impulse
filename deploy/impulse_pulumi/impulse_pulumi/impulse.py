@@ -23,6 +23,7 @@ class ImpulseInstance:
             plan=config.require("impulse_plan"),
             label=config.require("impulse_instance_label"),
             vpc_ids=[network.vpc.id],
+            firewall_group_id=network.public_firewall.id,
         )
         self.reserved_ip = vultr.ReservedIp(
             "impulse_ip",
