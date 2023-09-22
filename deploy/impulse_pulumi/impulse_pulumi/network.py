@@ -20,6 +20,13 @@ class KestrelNetwork:
                 description="Kestrel VPC firewall group"
             ),
         )
+        # public-facing rules
+        self.public_firewall = vultr.FirewallGroup(
+            "firewall_public",
+            vultr.FirewallGroupArgs(
+                description="Kestrel 'public' firewall group"
+            )
+        )
         # convert to form "192.168.0.0/255.255.255.0", which can be parsed by
         # ipaddress.IPv4Network
         subnet_str = pulumi.Output.format(
@@ -56,25 +63,45 @@ class KestrelNetwork:
                         subnet_size=32,
                         port="5432",
                         notes=f"allow trusted IP {ind} to connect to Postgres",
-                    )
+                    ),
+                    pulumi.ResourceOptions(
+                        parent=self.private_firewall,
+                        delete_before_replace=True,
+                        aliases=[pulumi.Alias(parent=None)]
+                    ),
+                )
+                vultr.FirewallRule(
+                    f"ssh_trusted_{ind}",
+                    vultr.FirewallRuleArgs(
+                        firewall_group_id=self.private_firewall.id,
+                        protocol="tcp",
+                        ip_type="v4",
+                        subnet=trusted_ip,
+                        subnet_size=32,
+                        port="22",
+                        notes=f"allow SSH from trusted {ind}",
+                    ),
+                    pulumi.ResourceOptions(
+                        parent=self.private_firewall,
+                    ),
+                )
+                vultr.FirewallRule(
+                    f"ssh_public_trusted_{ind}",
+                    vultr.FirewallRuleArgs(
+                        firewall_group_id=self.public_firewall.id,
+                        protocol="tcp",
+                        ip_type="v4",
+                        subnet=trusted_ip,
+                        subnet_size=32,
+                        port="22",
+                        notes=f"allow SSH from trusted {ind}",
+                    ),
+                    pulumi.ResourceOptions(
+                        parent=self.public_firewall,
+                    ),
                 )
         config.require_secret_object("trusted_ips").apply(handle_trusted_ips)
 
-        vultr.FirewallRule(
-            "pg_allow_ssh_all",
-            vultr.FirewallRuleArgs(
-                firewall_group_id=self.private_firewall.id,
-                protocol="tcp",
-                ip_type="v4",
-                subnet="0.0.0.0",
-                subnet_size=0,
-                port="22",
-                notes="allow SSH from any host",
-            ),
-            pulumi.ResourceOptions(
-                parent=self.private_firewall,
-            )
-        )
         vultr.FirewallRule(
             "icmp_allow",
             vultr.FirewallRuleArgs(
@@ -87,14 +114,6 @@ class KestrelNetwork:
             ),
             pulumi.ResourceOptions(
                 parent=self.private_firewall,
-            )
-        )
-
-        # public-facing rules
-        self.public_firewall = vultr.FirewallGroup(
-            "firewall_public",
-            vultr.FirewallGroupArgs(
-                description="Kestrel 'public' firewall group"
             )
         )
 
