@@ -7,6 +7,7 @@ import pulumi_command.remote
 
 from .network import KestrelNetwork
 from .postgres import ImpulsePgInstance
+from .config import SSH_KEY_PATH
 
 
 class SiteInstance:
@@ -21,7 +22,7 @@ class SiteInstance:
             snapshot_id=config.require("base_snapshot_id"),
             region=config.require("region"),
             plan=config.require("site_plan"),
-            label="kesetrelsite",
+            label="kestrelsite",
             vpc_ids=[network.vpc.id],
             firewall_group_id=network.public_firewall.id,
         )
@@ -40,12 +41,12 @@ class SiteInstance:
         self.connection = pulumi_command.remote.ConnectionArgs(
             host=self.instance.main_ip,
             user="ubuntu",
-            private_key=Path(config.require("ssh_key_path")).read_text()
+            private_key=Path(SSH_KEY_PATH).read_text()
         )
         self.connection_root = pulumi_command.remote.ConnectionArgs(
             host=self.instance.main_ip,
             user="ubuntu",
-            private_key=Path(config.require("ssh_key_path")).read_text()
+            private_key=Path(SSH_KEY_PATH).read_text()
         )
         copy_nginx = pulumi_command.remote.CopyFile(
             "copy_nginx_config",

@@ -4,6 +4,7 @@ import pulumi
 import pulumi_command
 import ediri_vultr as vultr
 
+from .config import SSH_KEY_PATH
 from .network import KestrelNetwork
 from .postgres import ManagedPgInstance, ImpulsePgInstance
 
@@ -37,7 +38,7 @@ class ImpulseInstance:
                 protect=True,
             )
         )
-        with open(config.require("ssh_key_path"), "r") as fp:
+        with open(SSH_KEY_PATH, "r") as fp:
             private_key = fp.read()
         connection = pulumi_command.remote.ConnectionArgs(
             host=self.instance.main_ip,

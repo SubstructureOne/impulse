@@ -11,8 +11,6 @@ config:
     - secure: AAABADsB5Q/H6bzF5V02UhFn6edaJUX6YZDS5fd6BIRipQZK95kehqo8HY4=
   impulse_pulumi:region: atl
   impulse_pulumi:site_plan: vhp-1c-1gb-amd
-  impulse_pulumi:ssh_key_path:
-    secure: AAABAL61leKmw7CEH/qx5wdQr+ti0v3YNJEt0Pc7gzBzalJIKCR+lAZXHqdms5UdeFLNAntLg3Jxd3q1D+XziJSM
   impulse_pulumi:stripe_fund_cancel_url: https://site.dev.kdeploy.com/profile
   impulse_pulumi:stripe_fund_price_id:
     secure: AAABAJ+fllpC5nnhNSrRgNzatsnS1m5fgF27AlsFpXRL1jGSQFzTLCWXxiLNoe5vivyTstvWarOaQQ/cy2o=
@@ -25,3 +23,4 @@ config:
   impulse_pulumi:supabase_url: https://wswjgbwatlsjoqzjvqcg.supabase.co
   impulse_pulumi:trusted_ips:
     - secure: AAABAH/QvEmXSm0YQKThQAsxrkOwEVHr7ZhXApBbxUMRKFjLKaFGFv8OCdo=
+    - secure: AAABAE6hE/rT7gSBta5w1JkUINOlw7vXHTA2OMLYMXSofNalShx9EKvgB1yO

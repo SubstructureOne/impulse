@@ -5,6 +5,7 @@ import pulumi_command
 import pulumi_random
 import ediri_vultr as vultr
 
+from .config import SSH_KEY_PATH
 from .network import KestrelNetwork
 
 
@@ -39,7 +40,7 @@ class ManagedPgInstance:
         self.connection = pulumi_command.remote.ConnectionArgs(
             host=self.instance.main_ip,
             user="root",
-            private_key=Path(config.require("ssh_key_path")).read_text(),
+            private_key=Path(SSH_KEY_PATH).read_text(),
         )
         setpass = pulumi_command.remote.Command(
             "set_managed_pg_password",
@@ -118,7 +119,7 @@ class ImpulsePgInstance:
         self.connection = pulumi_command.remote.ConnectionArgs(
             host=self.instance.main_ip,
             user="root",
-            private_key=Path(config.require("ssh_key_path")).read_text(),
+            private_key=Path(SSH_KEY_PATH).read_text(),
         )
         setpass = pulumi_command.remote.Command(
             "set_impulse_pg_password",
