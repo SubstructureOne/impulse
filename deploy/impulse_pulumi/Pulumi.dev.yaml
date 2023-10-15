@@ -9,6 +9,7 @@ config:
   impulse_pulumi:managed_pg_plan: vhp-1c-1gb-amd
   impulse_pulumi:public_ips:
     - secure: AAABADsB5Q/H6bzF5V02UhFn6edaJUX6YZDS5fd6BIRipQZK95kehqo8HY4=
+    - secure: AAABADdJt/mrUinai4XQdf4D6yyD2EdiNwKVcoHDYk8pG9zqKqUqqfEETdy9
   impulse_pulumi:region: atl
   impulse_pulumi:site_plan: vhp-1c-1gb-amd
   impulse_pulumi:stripe_fund_cancel_url: https://site.dev.kdeploy.com/profile

@@ -100,6 +100,7 @@ diesel::table! {
         status_synced -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        pg_password_enc -> Nullable<Bytea>,
     }
 }
 

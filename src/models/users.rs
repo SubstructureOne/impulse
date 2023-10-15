@@ -1,6 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
+use diesel::sql_types::Nullable;
 use uuid::Uuid;
 
 use crate::schema::users;
@@ -15,7 +16,7 @@ pub enum UserStatus {
     Deleted
 }
 
-#[derive(Queryable, Debug, PartialEq)]
+#[derive(Queryable, Debug)]
 pub struct User {
     pub user_id: Uuid,
     pub pg_name: String,
@@ -24,6 +25,7 @@ pub struct User {
     pub status_synced: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub pg_password_enc: Option<Vec<u8>>,
 }
 impl User {
     pub fn retrieve(conn: &mut PgConnection, user_id_: &Uuid) -> Result<User>
