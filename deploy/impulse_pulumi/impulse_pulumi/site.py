@@ -136,7 +136,7 @@ EOT
             pulumi_command.remote.CommandArgs(
                 connection=self.connection,
                 create="bash /home/ubuntu/deploy_website.sh",
-                triggers=[copy_setup],
+                triggers=[copy_setup, write_env_command],
             ),
             pulumi.ResourceOptions(
                 depends_on=[copy_nginx, copy_setup, write_env, impulse_pg_inst.configured],
