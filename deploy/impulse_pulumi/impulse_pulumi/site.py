@@ -4,6 +4,7 @@ from pathlib import Path
 import pulumi
 import ediri_vultr as vultr
 import pulumi_command.remote
+import pulumi_random
 
 from .network import KestrelNetwork
 from .postgres import ImpulsePgInstance
@@ -83,6 +84,13 @@ class SiteInstance:
                 parent=self.instance,
             )
         )
+        self.pgpass_encryption_key = pulumi.Output.secret(pulumi_random.RandomId(
+            "pgpass_encryption_key",
+            pulumi_random.RandomIdArgs(byte_length=32),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
+        ))
         write_env_command = pulumi.Output.format(
             """
 cat <<EOT >/home/ubuntu/kestrelsite.env.local
@@ -99,6 +107,7 @@ STRIPE_WEBHOOK_SECRET={5}
 STRIPE_FUND_ACCOUNT_PRICE_ID={6}
 STRIPE_FUND_ACCOUNT_SUCCESS_URL={7}
 STRIPE_FUND_ACCOUNT_CANCEL_URL={8}
+PGPASS_KEY_B64={9}
 EOT
             """,
             config.require("supabase_url"),
@@ -110,7 +119,7 @@ EOT
             config.require_secret("stripe_fund_price_id"),
             config.require("stripe_fund_success_url"),
             config.require("stripe_fund_cancel_url"),
-
+            self.pgpass_encryption_key.b64_std,
         )
         write_env = pulumi_command.remote.Command(
             "write_kestrelsite_env_file",

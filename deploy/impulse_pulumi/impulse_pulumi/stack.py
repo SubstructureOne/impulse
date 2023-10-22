@@ -44,3 +44,4 @@ class Stack:
         pulumi.export("impulse_privateip", self.impulse.instance.internal_ip)
         pulumi.export("site_publicip", self.site.instance.main_ip)
         pulumi.export("site_privateip", self.site.instance.internal_ip)
+        pulumi.export("pgpass_key", self.site.pgpass_encryption_key)
