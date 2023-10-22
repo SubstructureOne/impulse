@@ -77,6 +77,12 @@ EOT
             pulumi_command.remote.CommandArgs(
                 connection=connection,
                 create=dotenv_write_cmd,
+                triggers=[
+                    managed_inst.instance.internal_ip,
+                    managed_inst.password.result,
+                    impulse_pg_inst.instance.internal_ip,
+                    impulse_pg_inst.password.result,
+                ]
             ),
             pulumi.ResourceOptions(
                 parent=self.instance,
@@ -97,6 +103,7 @@ systemctl restart prew
             pulumi_command.remote.CommandArgs(
                 connection=connection,
                 create=prew_toml_write_cmd,
+                triggers=[managed_inst.instance.internal_ip],
             ),
             pulumi.ResourceOptions(
                 parent=self.instance,
@@ -108,7 +115,8 @@ systemctl restart prew
         create_tarball = pulumi_command.local.Command(
             "create_migration_tarball",
             pulumi_command.local.CommandArgs(
-                create=f"""bash -c "pushd {migrations_dir_rel}; tar czvf {tarball_path} migrations/" """
+                create=f"""bash -c "pushd {migrations_dir_rel}; tar czvf {tarball_path} migrations/" """,
+                triggers=[sorted(os.listdir(migrations_dir_rel))],
             ),
             pulumi.ResourceOptions(
                 parent=self.instance,
@@ -120,18 +128,21 @@ systemctl restart prew
                 connection=connection,
                 local_path=tarball_path,
                 remote_path="/opt/impulse/bin/migrations.tar.gz",
+                triggers=[create_tarball],
             ),
             pulumi.ResourceOptions(
                 depends_on=[create_tarball],
                 parent=self.instance,
             )
         )
+        deploy_impulse_script = "deploy_files/deploy_impulse.sh"
         copy_deploy_script = pulumi_command.remote.CopyFile(
             "copy_deploy_impulse",
             pulumi_command.remote.CopyFileArgs(
                 connection=connection,
-                local_path="deploy_files/deploy_impulse.sh",
+                local_path=deploy_impulse_script,
                 remote_path="/root/deploy_impulse.sh",
+                triggers=[os.path.getmtime(deploy_impulse_script)]
             ),
             pulumi.ResourceOptions(
                 parent=self.instance,
@@ -142,6 +153,7 @@ systemctl restart prew
             pulumi_command.remote.CommandArgs(
                 connection=connection,
                 create="bash /root/deploy_impulse.sh",
+                triggers=[copy_deploy_script, copy_tarball],
             ),
             pulumi.ResourceOptions(
                 depends_on=[copy_deploy_script, copy_tarball],
