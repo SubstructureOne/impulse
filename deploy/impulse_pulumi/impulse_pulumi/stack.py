@@ -13,7 +13,7 @@ class Stack:
         self.managed_pg = ManagedPgInstance(config, self.network)
         self.impulse_pg = ImpulsePgInstance(config, self.network)
         self.impulse = ImpulseInstance(config, self.network, self.managed_pg, self.impulse_pg)
-        self.site = SiteInstance(config, self.network, self.impulse_pg)
+        self.site = SiteInstance(config, self.network, self.managed_pg, self.impulse_pg)
 
         vultr.DnsRecord(
             "impulse_dns",

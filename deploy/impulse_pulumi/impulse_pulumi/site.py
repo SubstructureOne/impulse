@@ -7,7 +7,7 @@ import pulumi_command.remote
 import pulumi_random
 
 from .network import KestrelNetwork
-from .postgres import ImpulsePgInstance
+from .postgres import ImpulsePgInstance, ManagedPgInstance
 from .config import SSH_KEY_PATH
 
 
@@ -16,6 +16,7 @@ class SiteInstance:
             self,
             config: pulumi.Config,
             network: KestrelNetwork,
+            managed_pg_inst: ManagedPgInstance,
             impulse_pg_inst: ImpulsePgInstance,
     ):
         self.instance = vultr.Instance(
@@ -102,18 +103,24 @@ POSTGRES_PORT=5432
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD={3}
 POSTGRES_DATABASE=impulse
-STRIPE_SECRET_KEY={4}
-STRIPE_WEBHOOK_SECRET={5}
-STRIPE_FUND_ACCOUNT_PRICE_ID={6}
-STRIPE_FUND_ACCOUNT_SUCCESS_URL={7}
-STRIPE_FUND_ACCOUNT_CANCEL_URL={8}
-PGPASS_KEY_B64={9}
+MANAGED_PG_HOST={4}
+MANAGED_PG_PORT=5432
+MANAGED_PG_USER=postgres
+MANAGED_PG_PASSWORD={5}
+STRIPE_SECRET_KEY={6}
+STRIPE_WEBHOOK_SECRET={7}
+STRIPE_FUND_ACCOUNT_PRICE_ID={8}
+STRIPE_FUND_ACCOUNT_SUCCESS_URL={9}
+STRIPE_FUND_ACCOUNT_CANCEL_URL={10}
+PGPASS_KEY_B64={11}
 EOT
             """,
             config.require("supabase_url"),
             config.require("supabase_anon_key"),
             impulse_pg_inst.instance.internal_ip,
             impulse_pg_inst.password.result,
+            managed_pg_inst.instance.internal_ip,
+            managed_pg_inst.password.result,
             config.require_secret("stripe_secret_key"),
             config.require_secret("stripe_webhook_secret"),
             config.require_secret("stripe_fund_price_id"),
