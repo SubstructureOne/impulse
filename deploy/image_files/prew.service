@@ -11,7 +11,7 @@ RestartSec=5
 User=prew
 ExecStart=/opt/impulse/bin/prew -c /opt/impulse/etc/prew.toml
 WorkingDirectory=/opt/impulse/bin/
-Environment=RUST_LOG=trace
+Environment=RUST_LOG=debug
 
 [Install]
 WantedBy=multi-user.target
