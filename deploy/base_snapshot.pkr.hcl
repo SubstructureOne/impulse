@@ -40,5 +40,6 @@ build {
   provisioner "shell" {
     script = "./setup_base.sh"
     expect_disconnect = true
+    pause_after = "30s"
   }
 }

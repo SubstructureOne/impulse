@@ -3,8 +3,10 @@ set -euxo pipefail
 # wait for cloud-init to finish
 /usr/bin/cloud-init status --wait
 
+passwd --delete ubuntu
+
 apt update
-apt install -y libpq-dev postgresql-14 build-essential
+apt install -y libpq-dev postgresql-14 build-essential nginx
 # !!!
 # Vultr by default modifies sshd_config to allow the root user to login
 # via the root password (autocreated at initialization). The use of

@@ -1,0 +1,18 @@
+[Unit]
+Description=Kestrel Site
+After=network-online.target
+Requires=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=ubuntu
+ExecStart=/home/ubuntu/node/bin/npm start
+Environment=NODE_PATH=/home/ubuntu/node
+Environment=PATH=/home/ubuntu/node/bin:/usr/bin
+WorkingDirectory=/home/ubuntu/kestrelsite
+
+[Install]
+WantedBy=multi-user.target
