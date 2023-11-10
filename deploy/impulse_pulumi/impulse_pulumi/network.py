@@ -136,6 +136,18 @@ class KestrelNetwork:
                     )
                 )
                 vultr.FirewallRule(
+                    f"public_https_access_{ind}",
+                    vultr.FirewallRuleArgs(
+                        firewall_group_id=self.public_firewall.id,
+                        protocol="tcp",
+                        ip_type="v4",
+                        subnet=public_ip,
+                        subnet_size=subnet_size,
+                        port="443",
+                        notes=f"allow HTTP from public {ind}",
+                    )
+                )
+                vultr.FirewallRule(
                     f"public_pg_access_{ind}",
                     vultr.FirewallRuleArgs(
                         firewall_group_id=self.public_firewall.id,
