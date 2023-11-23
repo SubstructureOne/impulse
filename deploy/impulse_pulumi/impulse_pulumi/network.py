@@ -116,25 +116,36 @@ class KestrelNetwork:
                 parent=self.private_firewall,
             )
         )
-
+        vultr.FirewallRule(
+            f"public_http_access",
+            vultr.FirewallRuleArgs(
+                firewall_group_id=self.public_firewall.id,
+                protocol="tcp",
+                ip_type="v4",
+                subnet="0.0.0.0",
+                subnet_size=0,
+                port="80",
+                notes=f"allow HTTP from public",
+            )
+        )
         def handle_public_ips(public_ips):
             for ind, public_ip in enumerate(public_ips):
                 if public_ip == "0.0.0.0":
                     subnet_size = 0
                 else:
                     subnet_size = 32
-                vultr.FirewallRule(
-                    f"public_http_access_{ind}",
-                    vultr.FirewallRuleArgs(
-                        firewall_group_id=self.public_firewall.id,
-                        protocol="tcp",
-                        ip_type="v4",
-                        subnet=public_ip,
-                        subnet_size=subnet_size,
-                        port="80",
-                        notes=f"allow HTTP from public {ind}",
-                    )
-                )
+                # vultr.FirewallRule(
+                #     f"public_http_access_{ind}",
+                #     vultr.FirewallRuleArgs(
+                #         firewall_group_id=self.public_firewall.id,
+                #         protocol="tcp",
+                #         ip_type="v4",
+                #         subnet=public_ip,
+                #         subnet_size=subnet_size,
+                #         port="80",
+                #         notes=f"allow HTTP from public {ind}",
+                #     )
+                # )
                 vultr.FirewallRule(
                     f"public_https_access_{ind}",
                     vultr.FirewallRuleArgs(
