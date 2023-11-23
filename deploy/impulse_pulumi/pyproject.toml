@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "impulse_pulumi"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.12"
 ediri-vultr = "^2.15.1"
 pulumi = "^3.78.1"
 pulumi-command = "^0.8.2"
