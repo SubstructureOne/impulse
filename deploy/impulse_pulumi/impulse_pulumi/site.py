@@ -56,6 +56,7 @@ class SiteInstance:
                 connection=self.connection_root,
                 local_path="deploy_files/nginx_default",
                 remote_path="/home/ubuntu/nginx_default",
+                triggers=[os.path.getmtime("deploy_files/nginx_default")],
             ),
             pulumi.ResourceOptions(
                 parent=self.instance,
