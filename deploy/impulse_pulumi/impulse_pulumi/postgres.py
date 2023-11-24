@@ -77,6 +77,20 @@ class ManagedPgInstance:
                 parent=self.instance
             )
         )
+        data_storage = vultr.BlockStorage(
+            "data_block_storage_1",
+            vultr.BlockStorageArgs(
+                region=config.require("region"),
+                label="data_block_storage_1",
+                size_gb=40,
+                block_type="storage_opt",
+                live=True,
+                attached_to_instance=self.instance.id,
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
+        )
         pulumi_command.remote.Command(
             "restart_managed_postgresql",
             pulumi_command.remote.CommandArgs(
