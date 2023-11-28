@@ -21,7 +21,7 @@ class Stack:
                 data=self.impulse.instance.main_ip,
                 domain=self.network.top_domain,
                 type="A",
-                name="impulse.dev",
+                name=f"impulse.{pulumi.get_stack()}",
             )
         )
         vultr.DnsRecord(
@@ -30,7 +30,7 @@ class Stack:
                 data=self.site.instance.main_ip,
                 domain=self.network.top_domain,
                 type="A",
-                name="site.dev",
+                name=f"site.{pulumi.get_stack()}",
             )
         )
 
