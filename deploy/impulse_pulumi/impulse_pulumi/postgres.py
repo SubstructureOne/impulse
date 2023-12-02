@@ -1,3 +1,4 @@
+import os.path
 from pathlib import Path
 
 import pulumi
@@ -59,8 +60,9 @@ class ManagedPgInstance:
             "managed_pg_postgresql_conf",
             pulumi_command.remote.CopyFileArgs(
                 connection=self.connection,
-                local_path="deploy_files/postgresql.conf",
+                local_path="deploy_files/postgresql_managed.conf",
                 remote_path="/etc/postgresql/14/main/postgresql.conf",
+                triggers=[os.path.getmtime("deploy_files/postgresql_managed.conf")],
             ),
             pulumi.ResourceOptions(
                 parent=self.instance,
