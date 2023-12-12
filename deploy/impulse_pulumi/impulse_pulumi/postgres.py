@@ -1,3 +1,4 @@
+import os.path
 from pathlib import Path
 
 import pulumi
@@ -59,8 +60,9 @@ class ManagedPgInstance:
             "managed_pg_postgresql_conf",
             pulumi_command.remote.CopyFileArgs(
                 connection=self.connection,
-                local_path="deploy_files/postgresql.conf",
+                local_path="deploy_files/postgresql_managed.conf",
                 remote_path="/etc/postgresql/14/main/postgresql.conf",
+                triggers=[os.path.getmtime("deploy_files/postgresql_managed.conf")],
             ),
             pulumi.ResourceOptions(
                 parent=self.instance,
@@ -75,6 +77,20 @@ class ManagedPgInstance:
             ),
             pulumi.ResourceOptions(
                 parent=self.instance
+            )
+        )
+        data_storage = vultr.BlockStorage(
+            "data_block_storage_1",
+            vultr.BlockStorageArgs(
+                region=config.require("region"),
+                label="data_block_storage_1",
+                size_gb=40,
+                block_type="storage_opt",
+                live=True,
+                attached_to_instance=self.instance.id,
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
             )
         )
         pulumi_command.remote.Command(
