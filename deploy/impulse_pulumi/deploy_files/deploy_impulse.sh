@@ -14,6 +14,12 @@ tar xzvf migrations.tar.gz
 # configure managed database (refers to environment vars)
 ./setup_database
 
+# install certbot
+sudo snap install --classic certbot
+sudo ln -sf /snap/bin/certbot /usr/bin/certbot
+sudo certbot certonly -d impulse.dev.kdeploy.com -m dek@substructure.one --agree-tos -n --nginx
+
+
 # start the services
 sudo systemctl enable --now envoy.service
 sudo systemctl enable --now prew.service

@@ -11,7 +11,7 @@ class KestrelNetwork:
             description="Kestrel VPC",
             region=config.require("region")
         )
-        self.top_domain = vultr.DnsDomain("kdeploy.com", domain="kdeploy.com")
+        # self.top_domain = vultr.DnsDomain("kdeploy.com", domain="kdeploy.com")
 
         # VPC rules
         self.private_firewall = vultr.FirewallGroup(

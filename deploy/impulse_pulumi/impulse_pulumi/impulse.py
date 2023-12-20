@@ -22,7 +22,7 @@ class ImpulseInstance:
             snapshot_id=config.require("impulse_snapshot_id"),
             region=config.require("region"),
             plan=config.require("impulse_plan"),
-            label=config.require("impulse_instance_label"),
+            label=f"impulse ({pulumi.get_stack()})",
             vpc_ids=[network.vpc.id],
             firewall_group_id=network.public_firewall.id,
         )

@@ -22,7 +22,7 @@ class ManagedPgInstance:
                 snapshot_id=config.require("base_snapshot_id"),
                 region=config.require("region"),
                 plan=config.require("managed_pg_plan"),
-                label=config.require("managed_pg_instance_label"),
+                label=f"managed_pg ({pulumi.get_stack()})",
                 vpc_ids=[network.vpc.id],
                 firewall_group_id=network.private_firewall.id,
             ),
@@ -117,7 +117,7 @@ class ImpulsePgInstance:
             snapshot_id=config.require("base_snapshot_id"),
             region=config.require("region"),
             plan=config.require("impulse_pg_plan"),
-            label="impulse_pg",
+            label=f"impulse_pg ({pulumi.get_stack()})",
             vpc_ids=[network.vpc.id],
             firewall_group_id=network.private_firewall.id,
         )

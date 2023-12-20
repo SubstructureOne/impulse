@@ -19,7 +19,7 @@ class Stack:
             "impulse_dns",
             vultr.DnsRecordArgs(
                 data=self.impulse.instance.main_ip,
-                domain=self.network.top_domain,
+                domain="kdeploy.com",
                 type="A",
                 name=f"impulse.{pulumi.get_stack()}",
             )
@@ -28,7 +28,7 @@ class Stack:
             "kestrel_site_dns",
             vultr.DnsRecordArgs(
                 data=self.site.instance.main_ip,
-                domain=self.network.top_domain,
+                domain="kdeploy.com",
                 type="A",
                 name=f"site.{pulumi.get_stack()}",
             )

@@ -24,7 +24,7 @@ class SiteInstance:
             snapshot_id=config.require("base_snapshot_id"),
             region=config.require("region"),
             plan=config.require("site_plan"),
-            label="kestrelsite",
+            label=f"kestrelsite ({pulumi.get_stack()})",
             vpc_ids=[network.vpc.id],
             firewall_group_id=network.public_firewall.id,
         )
