@@ -143,7 +143,7 @@ EOT
             "configure_site",
             pulumi_command.remote.CommandArgs(
                 connection=self.connection,
-                create="bash /home/ubuntu/deploy_website.sh",
+                create=f"""EMAIL_ADDRESS="{config.require("email_address")}" SITE_HOSTNAME="{config.require("site_hostname")}" bash /home/ubuntu/deploy_website.sh""",
                 triggers=[copy_setup, write_env_command],
             ),
             pulumi.ResourceOptions(

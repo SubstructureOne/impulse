@@ -21,3 +21,5 @@ config:
   impulse_pulumi:supabase_url: https://kxcdztfosvhfnjoodpfu.supabase.co
   impulse_pulumi:trusted_ips:
     - secure: AAABAH2lZ+SKPYYhfFX8qzMAEelWmZ4gTa95XaDEymI8V3N6Cj6feiWArS4+
+  impulse_pulumi:site_hostname: site.prod.kdeploy.com
+  impulse_pulumi:impulse_hostname: impulse.prod.kdeploy.com

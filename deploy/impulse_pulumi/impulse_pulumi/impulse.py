@@ -152,7 +152,7 @@ systemctl restart prew
             "run_deploy_impulse",
             pulumi_command.remote.CommandArgs(
                 connection=connection,
-                create="bash /root/deploy_impulse.sh",
+                create=f"""EMAIL_ADDRESS="{config.require("email_address")}" IMPULSE_HOSTNAME="{config.require("impulse_hostname")}" bash /root/deploy_impulse.sh""",
                 triggers=[copy_deploy_script, copy_tarball],
             ),
             pulumi.ResourceOptions(
