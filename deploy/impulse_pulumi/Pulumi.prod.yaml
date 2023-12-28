@@ -23,3 +23,9 @@ config:
     - secure: AAABAH2lZ+SKPYYhfFX8qzMAEelWmZ4gTa95XaDEymI8V3N6Cj6feiWArS4+
   impulse_pulumi:site_hostname: site.prod.kdeploy.com
   impulse_pulumi:impulse_hostname: impulse.prod.kdeploy.com
+  impulse_pulumi:impulse_domain: kdeploy.com
+  impulse_pulumi:impulse_dnsname: impulse.prod
+  impulse_pulumi:site_domain: kestrelcode.com
+  impulse_pulumi:site_dnsname: .
+  
+

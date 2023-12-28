@@ -25,3 +25,7 @@ config:
   impulse_pulumi:trusted_ips:
     - secure: AAABAH/QvEmXSm0YQKThQAsxrkOwEVHr7ZhXApBbxUMRKFjLKaFGFv8OCdo=
     - secure: AAABAE6hE/rT7gSBta5w1JkUINOlw7vXHTA2OMLYMXSofNalShx9EKvgB1yO
+  impulse_pulumi:impulse_domain: kdeploy.com
+  impulse_pulumi:impulse_dnsname: impulse.dev
+  impulse_pulumi:site_domain: kdeploy.com
+  impulse_pulumi:site_dnsname: site.dev
