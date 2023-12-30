@@ -1,5 +1,8 @@
 config:
   impulse_pulumi:base_snapshot_id: 730ff49e-0a54-4b00-bc80-956cd993b5fc
+  impulse_pulumi:impulse_dnsname: impulse.prod
+  impulse_pulumi:impulse_domain: kdeploy.com
+  impulse_pulumi:impulse_hostname: impulse.prod.kdeploy.com
   impulse_pulumi:impulse_instance_label: impulse
   impulse_pulumi:impulse_pg_plan: vhp-1c-1gb-amd
   impulse_pulumi:impulse_plan: vhp-1c-1gb-amd
@@ -7,7 +10,11 @@ config:
   impulse_pulumi:managed_pg_instance_label: managed_pg
   impulse_pulumi:managed_pg_plan: vhp-1c-1gb-amd
   impulse_pulumi:public_ips:
-    - secure: AAABANbrKjLhA28dWMND+9g+x68beUtanwXOFIe1nqIBpY8feLtH9Vdb8fPx
+    - 0.0.0.0
+  impulse_pulumi:region: ewr
+  impulse_pulumi:site_dnsname: site.prod
+  impulse_pulumi:site_domain: kdeploy.com
+  impulse_pulumi:site_hostname: site.prod.kdeploy.com
   impulse_pulumi:site_plan: vhp-1c-1gb-amd
   impulse_pulumi:stripe_fund_cancel_url: https://site.prod.kdeploy.com/profile
   impulse_pulumi:stripe_fund_price_id:
@@ -21,11 +28,3 @@ config:
   impulse_pulumi:supabase_url: https://kxcdztfosvhfnjoodpfu.supabase.co
   impulse_pulumi:trusted_ips:
     - secure: AAABAH2lZ+SKPYYhfFX8qzMAEelWmZ4gTa95XaDEymI8V3N6Cj6feiWArS4+
-  impulse_pulumi:site_hostname: site.prod.kdeploy.com
-  impulse_pulumi:impulse_hostname: impulse.prod.kdeploy.com
-  impulse_pulumi:impulse_domain: kdeploy.com
-  impulse_pulumi:impulse_dnsname: impulse.prod
-  impulse_pulumi:site_domain: kdeploy.com
-  impulse_pulumi:site_dnsname: site.prod
-  
-

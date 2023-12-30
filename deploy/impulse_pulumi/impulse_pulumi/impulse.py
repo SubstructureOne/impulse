@@ -35,7 +35,7 @@ class ImpulseInstance:
                 label="reserved impulse IPv4",
             ),
             pulumi.ResourceOptions(
-                protect=True,
+                protect=False,
             )
         )
         with open(SSH_KEY_PATH, "r") as fp:

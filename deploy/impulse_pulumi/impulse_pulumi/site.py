@@ -37,7 +37,7 @@ class SiteInstance:
                 label="reserved kestrel site IPv4",
             ),
             pulumi.ResourceOptions(
-                protect=True,
+                protect=False,
             )
         )
         self.connection = pulumi_command.remote.ConnectionArgs(
