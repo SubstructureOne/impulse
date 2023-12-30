@@ -25,7 +25,7 @@ config:
   impulse_pulumi:impulse_hostname: impulse.prod.kdeploy.com
   impulse_pulumi:impulse_domain: kdeploy.com
   impulse_pulumi:impulse_dnsname: impulse.prod
-  impulse_pulumi:site_domain: kestrelcode.com
-  impulse_pulumi:site_dnsname: .
+  impulse_pulumi:site_domain: kdeploy.com
+  impulse_pulumi:site_dnsname: site.prod
   
 
