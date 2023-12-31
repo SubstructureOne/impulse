@@ -128,6 +128,7 @@ class KestrelNetwork:
                 notes=f"allow HTTP from public",
             )
         )
+
         def handle_public_ips(public_ips):
             for ind, public_ip in enumerate(public_ips):
                 if public_ip == "0.0.0.0":
