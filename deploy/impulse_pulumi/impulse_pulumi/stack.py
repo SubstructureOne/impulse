@@ -42,6 +42,8 @@ class Stack:
         pulumi.export("impulse_pg_privateip", self.impulse_pg.instance.internal_ip)
         pulumi.export("impulse_publicip", self.impulse.instance.main_ip)
         pulumi.export("impulse_privateip", self.impulse.instance.internal_ip)
+        pulumi.export("impulse_staticip", self.impulse.reserved_ip.subnet)
         pulumi.export("site_publicip", self.site.instance.main_ip)
         pulumi.export("site_privateip", self.site.instance.internal_ip)
+        pulumi.export("site_staticip", self.site.reserved_ip.subnet)
         pulumi.export("pgpass_key", self.site.pgpass_encryption_key)

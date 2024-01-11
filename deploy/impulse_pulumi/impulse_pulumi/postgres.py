@@ -83,7 +83,7 @@ class ManagedPgInstance:
             "data_block_storage_1",
             vultr.BlockStorageArgs(
                 region=config.require("region"),
-                label="data_block_storage_1",
+                label=f"managed_data_block_1 ({pulumi.get_stack()}",
                 size_gb=40,
                 block_type="storage_opt",
                 live=True,
@@ -136,6 +136,20 @@ class ImpulsePgInstance:
             host=self.instance.main_ip,
             user="root",
             private_key=Path(SSH_KEY_PATH).read_text(),
+        )
+        data_storage = vultr.BlockStorage(
+            "impulse_block",
+            vultr.BlockStorageArgs(
+                region=config.require("region"),
+                label=f"impulse_block ({pulumi.get_stack()}",
+                size_gb=40,
+                block_type="storage_opt",
+                live=True,
+                attached_to_instance=self.instance.id,
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
         )
         setpass = pulumi_command.remote.Command(
             "set_impulse_pg_password",
