@@ -83,7 +83,7 @@ class ManagedPgInstance:
             "data_block_storage_1",
             vultr.BlockStorageArgs(
                 region=config.require("region"),
-                label=f"managed_data_block_1 ({pulumi.get_stack()}",
+                label=f"managed_data_block_1 ({pulumi.get_stack()})",
                 size_gb=40,
                 block_type="storage_opt",
                 live=True,
@@ -141,7 +141,7 @@ class ImpulsePgInstance:
             "impulse_block",
             vultr.BlockStorageArgs(
                 region=config.require("region"),
-                label=f"impulse_block ({pulumi.get_stack()}",
+                label=f"impulse_block ({pulumi.get_stack()})",
                 size_gb=40,
                 block_type="storage_opt",
                 live=True,
