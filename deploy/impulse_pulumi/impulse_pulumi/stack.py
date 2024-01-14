@@ -18,7 +18,7 @@ class Stack:
         vultr.DnsRecord(
             "impulse_dns",
             vultr.DnsRecordArgs(
-                data=self.impulse.instance.main_ip,
+                data=self.impulse.reserved_ip.subnet,
                 domain=config.require("impulse_domain"),
                 type="A",
                 name=config.require("impulse_dnsname"),
@@ -27,7 +27,7 @@ class Stack:
         vultr.DnsRecord(
             "kestrel_site_dns",
             vultr.DnsRecordArgs(
-                data=self.site.instance.main_ip,
+                data=self.site.reserved_ip.subnet,
                 domain=config.require("site_domain"),
                 type="A",
                 name=config.require("site_dnsname"),

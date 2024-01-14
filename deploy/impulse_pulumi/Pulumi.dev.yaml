@@ -29,3 +29,5 @@ config:
   impulse_pulumi:impulse_dnsname: impulse.dev
   impulse_pulumi:site_domain: kdeploy.com
   impulse_pulumi:site_dnsname: site.dev
+  impulse_pulumi:impulse_hostname: impulse.dev.kdeploy.com
+  impulse_pulumi:site_hostname: site.dev.kdeploy.com

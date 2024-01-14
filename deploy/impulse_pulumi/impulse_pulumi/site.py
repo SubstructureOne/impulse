@@ -114,6 +114,7 @@ STRIPE_FUND_ACCOUNT_PRICE_ID={8}
 STRIPE_FUND_ACCOUNT_SUCCESS_URL={9}
 STRIPE_FUND_ACCOUNT_CANCEL_URL={10}
 PGPASS_KEY_B64={11}
+NEXT_PUBLIC_BASE_URL=https://{12}
 EOT
             """,
             config.require("supabase_url"),
@@ -128,6 +129,7 @@ EOT
             config.require("stripe_fund_success_url"),
             config.require("stripe_fund_cancel_url"),
             self.pgpass_encryption_key.b64_std,
+            config.require("site_hostname"),
         )
         write_env = pulumi_command.remote.Command(
             "write_kestrelsite_env_file",
