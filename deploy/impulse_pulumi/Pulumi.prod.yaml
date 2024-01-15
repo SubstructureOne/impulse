@@ -3,11 +3,9 @@ config:
   impulse_pulumi:impulse_dnsname: impulse.prod
   impulse_pulumi:impulse_domain: kdeploy.com
   impulse_pulumi:impulse_hostname: impulse.prod.kdeploy.com
-  impulse_pulumi:impulse_instance_label: impulse
   impulse_pulumi:impulse_pg_plan: vhp-1c-1gb-amd
   impulse_pulumi:impulse_plan: vhp-1c-1gb-amd
   impulse_pulumi:impulse_snapshot_id: d0fa7b52-c29a-4ddb-99ce-c36194bab838
-  impulse_pulumi:managed_pg_instance_label: managed_pg
   impulse_pulumi:managed_pg_plan: vhp-1c-1gb-amd
   impulse_pulumi:public_ips:
     - 0.0.0.0
