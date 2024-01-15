@@ -21,6 +21,13 @@ sudo snap install --classic certbot
 sudo ln -sf /snap/bin/certbot /usr/bin/certbot
 sudo certbot certonly -d "${IMPULSE_HOSTNAME}" -m "${EMAIL_ADDRESS}" --agree-tos -n --nginx
 
+# install envoy certificates
+sudo cp "/etc/letsencrypt/live/${IMPULSE_HOSTNAME}/fullchain.pem" /etc/ssl/certs/ssl-cert.pem
+sudo chown prew:prew /etc/ssl/certs/ssl-cert.pem
+sudo chmod 644 /etc/ssl/certs/ssl-cert.pem
+sudo cp "/etc/letsencrypt/live/${IMPULSE_HOSTNAME}/privkey.pem" /etc/ssl/private/ssl-cert.key
+sudo chown prew:prew /etc/ssl/private/ssl-cert.key
+sudo chmod 600 /etc/ssl/certs/ssl-cert.key
 
 # start the services
 sudo systemctl enable --now envoy.service
