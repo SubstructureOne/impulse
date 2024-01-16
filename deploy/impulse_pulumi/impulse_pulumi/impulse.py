@@ -136,6 +136,18 @@ systemctl restart prew
             )
         )
         deploy_impulse_script = "deploy_files/deploy_impulse.sh"
+        copy_envoy_template = pulumi_command.remote.CopyFile(
+            "copy_envoy_template",
+            pulumi_command.remote.CopyFileArgs(
+                connection=connection,
+                local_path="deploy_files/envoy-postgres.yaml.tmpl",
+                remote_path="/root/envoy-postgres.yaml.tmpl",
+                triggers=[os.path.getmtime("deploy_files/envoy-postgres.yaml.tmpl")],
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
+        )
         copy_deploy_script = pulumi_command.remote.CopyFile(
             "copy_deploy_impulse",
             pulumi_command.remote.CopyFileArgs(
@@ -152,11 +164,11 @@ systemctl restart prew
             "run_deploy_impulse",
             pulumi_command.remote.CommandArgs(
                 connection=connection,
-                create=f"""EMAIL_ADDRESS="{config.require("email_address")}" IMPULSE_HOSTNAME="{config.require("impulse_hostname")}" bash /root/deploy_impulse.sh""",
-                triggers=[copy_deploy_script, copy_tarball],
+                create=f"""ENVOY_PORT="{config.require("pgincoming_port")}" EMAIL_ADDRESS="{config.require("email_address")}" IMPULSE_HOSTNAME="{config.require("impulse_hostname")}" bash /root/deploy_impulse.sh""",
+                triggers=[copy_deploy_script, copy_tarball, copy_envoy_template],
             ),
             pulumi.ResourceOptions(
-                depends_on=[copy_deploy_script, copy_tarball],
+                depends_on=[copy_deploy_script, copy_tarball, copy_envoy_template],
                 parent=self.instance,
             )
         )

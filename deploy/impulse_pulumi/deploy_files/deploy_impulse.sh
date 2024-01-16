@@ -27,12 +27,19 @@ sudo chown prew:prew /etc/ssl/certs/ssl-cert.pem
 sudo chmod 644 /etc/ssl/certs/ssl-cert.pem
 sudo cp "/etc/letsencrypt/live/${IMPULSE_HOSTNAME}/privkey.pem" /etc/ssl/private/ssl-cert.key
 sudo chown prew:prew /etc/ssl/private/ssl-cert.key
-sudo chmod 600 /etc/ssl/certs/ssl-cert.key
+sudo chmod 600 /etc/ssl/private/ssl-cert.key
+
+# deploy envoy configuration file
+cat /root/envoy-postgres.yaml.tmpl | envsubst > envoy-postgres.yaml
+sudo cp envoy-postgres.yaml /opt/envoy/etc/envoy-postgres.yaml
 
 # start the services
-sudo systemctl enable --now envoy.service
-sudo systemctl enable --now prew.service
-sudo systemctl enable --now impulse.timer
+sudo systemctl enable envoy.service
+sudo systemctl restart envoy.service
+sudo systemctl enable prew.service
+sudo systemctl restart prew.service
+sudo systemctl enable impulse.timer
+sudo systemctl restart impulse.timer
 
 # ensure firewall is open on Postgresql port
-sudo ufw allow 5432
+sudo ufw allow ${ENVOY_PORT}

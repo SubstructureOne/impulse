@@ -167,7 +167,7 @@ class KestrelNetwork:
                         ip_type="v4",
                         subnet=public_ip,
                         subnet_size=subnet_size,
-                        port="5432",
+                        port=config.require("pgincoming_port"),
                         notes=f"allow PG fromm public {ind}",
                     )
                 )
