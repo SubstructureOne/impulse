@@ -7,9 +7,10 @@ use clap::Parser;
 use futures::lock::Mutex;
 use log::info;
 use prew::{PacketRules, RewriteReverseProxy, RuleSetProcessor};
+use prew::postgresql::RemoveSuffixTransformer;
 use serde::{Serialize, Deserialize};
 
-use impulse::prew::{AppendUserNameTransformer, ImpulseReporter};
+use impulse::prew::{AppendUserNameTransformer, ImpulseReporter, RemoveAppendedUserNameTransformer};
 
 
 #[derive(Debug, Parser)]
@@ -57,6 +58,7 @@ pub async fn main() -> Result<()> {
     let parser = prew::PostgresParser::new();
     let filter = prew::NoFilter::new();
     let transformer = AppendUserNameTransformer::new();
+    let out_transformer = RemoveAppendedUserNameTransformer::new();
     let encoder = prew::MessageEncoder::new();
     let reporter = ImpulseReporter::new();
     let report_connstr = args.report_connstr.or(env::var("DATABASE_URL").ok())
@@ -69,6 +71,7 @@ pub async fn main() -> Result<()> {
         &parser,
         &filter,
         &transformer,
+        &out_transformer,
         &encoder,
         &reporter,
         &create_context,

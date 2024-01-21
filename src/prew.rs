@@ -12,7 +12,7 @@ use pg_query::NodeMut;
 use prew::{Reporter, PostgresqlPacket, Transformer};
 use prew::packet::Direction;
 use prew::rule::AuthenticationContext;
-use prew::postgresql::{PostgresqlPacketInfo, QueryMessage};
+use prew::postgresql::{DataColumn, DataRowMessage, PostgresqlPacketInfo, QueryMessage};
 
 use crate::models::reports::{NewReport, PostgresqlPacketType};
 
@@ -101,6 +101,56 @@ impl Reporter<PostgresqlPacket, Context> for ImpulseReporter {
             }
         });
         Ok(())
+    }
+}
+
+#[derive(Clone)]
+pub struct RemoveAppendedUserNameTransformer {
+}
+
+impl RemoveAppendedUserNameTransformer {
+    pub fn new() -> RemoveAppendedUserNameTransformer {
+        RemoveAppendedUserNameTransformer {}
+    }
+
+    fn modify_column(&self, column: &DataColumn, suffix: &Vec<u8>) -> DataColumn {
+        let bytes = &column.bytes;
+        if bytes.len() >= suffix.len() && bytes[bytes.len() - suffix.len()..].eq(suffix) {
+            DataColumn::new(Vec::from(&bytes[..bytes.len() - suffix.len()]))
+        } else {
+            DataColumn::new(bytes.clone())
+        }
+    }
+}
+impl Transformer<PostgresqlPacket, Context> for RemoveAppendedUserNameTransformer {
+    fn transform(&self, packet: &PostgresqlPacket, context: &Context) -> Result<PostgresqlPacket> {
+        if let Some(username) = &context.authinfo.username {
+            let suffix = format!("__{}", username).into_bytes();
+            let offset = suffix.len();
+            if let PostgresqlPacketInfo::DataRow(message) = &packet.info {
+                let mut modify = false;
+                for column in &message.columns {
+                    if column.bytes.len() >= suffix.len() {
+                        if column.bytes[column.bytes.len() - offset..].eq(&suffix) {
+                            modify = true;
+                            break;
+                        }
+                    }
+                }
+                if modify {
+                    let new_columns = message.columns.iter().map(|column| self.modify_column(&column, &suffix)).collect();
+                    let modified = DataRowMessage { columns: new_columns };
+                    let info = PostgresqlPacketInfo::DataRow(modified);
+                    Ok(PostgresqlPacket::new(info, None))
+                } else {
+                    Ok(packet.clone())
+                }
+            } else {
+                Ok(packet.clone())
+            }
+        } else {
+            Ok(packet.clone())
+        }
     }
 }
 
