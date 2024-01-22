@@ -16,7 +16,7 @@ pub enum UserStatus {
     Deleted
 }
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, Debug, PartialEq)]
 pub struct User {
     pub user_id: Uuid,
     pub pg_name: String,
