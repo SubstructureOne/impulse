@@ -46,6 +46,7 @@ impl FromStr for PostgresqlPacketType {
             "Startup" => Ok(PostgresqlPacketType::Startup),
             "Query" => Ok(PostgresqlPacketType::Query),
             "Other" => Ok(PostgresqlPacketType::Other),
+            "DataRow" => Ok(PostgresqlPacketType::DataRow),
             _ => Err(()),
         }
     }

@@ -39,7 +39,7 @@ static_resources:
                 "@type": type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy
                 stat_prefix: tcp_postgres
                 cluster: postgres_cluster
-                idle_timeout: 10s
+                idle_timeout: 120s
           transport_socket:
             name: "starttls"
             typed_config:

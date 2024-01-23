@@ -122,6 +122,32 @@ systemctl restart prew
                 parent=self.instance,
             )
         )
+        prew_binary_path = "../../target/release/prew"
+        copy_prew_binary = pulumi_command.remote.CopyFile(
+            "copy_prew_binary",
+            pulumi_command.remote.CopyFileArgs(
+                connection=connection,
+                local_path=prew_binary_path,
+                remote_path="/root/prew",
+                triggers=[os.path.getmtime(prew_binary_path)],
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
+        )
+        impulse_binary_path = "../../target/release/prew"
+        copy_impulse_binary = pulumi_command.remote.CopyFile(
+            "copy_impulse_binary",
+            pulumi_command.remote.CopyFileArgs(
+                connection=connection,
+                local_path=impulse_binary_path,
+                remote_path="/root/impulse",
+                triggers=[os.path.getmtime(impulse_binary_path)],
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
+        )
         copy_tarball = pulumi_command.remote.CopyFile(
             "copy_migrations_tarball",
             pulumi_command.remote.CopyFileArgs(
@@ -165,10 +191,22 @@ systemctl restart prew
             pulumi_command.remote.CommandArgs(
                 connection=connection,
                 create=f"""ENVOY_PORT="{config.require("pgincoming_port")}" EMAIL_ADDRESS="{config.require("email_address")}" IMPULSE_HOSTNAME="{config.require("impulse_hostname")}" bash /root/deploy_impulse.sh""",
-                triggers=[copy_deploy_script, copy_tarball, copy_envoy_template],
+                triggers=[
+                    copy_deploy_script,
+                    copy_tarball,
+                    copy_envoy_template,
+                    copy_prew_binary,
+                    copy_impulse_binary
+                ],
             ),
             pulumi.ResourceOptions(
-                depends_on=[copy_deploy_script, copy_tarball, copy_envoy_template],
+                depends_on=[
+                    copy_deploy_script,
+                    copy_tarball,
+                    copy_envoy_template,
+                    copy_prew_binary,
+                    copy_impulse_binary
+                ],
                 parent=self.instance,
             )
         )

@@ -14,6 +14,12 @@ tar xzvf migrations.tar.gz
 # configure managed database (refers to environment vars)
 ./setup_database
 
+# copy binaries
+sudo systemctl stop prew.service
+sudo cp /root/prew /opt/impulse/bin/prew
+sudo systemctl stop impulse.service
+sudo cp /root/impulse /opt/impulse/bin/impulse
+
 sudo ufw allow 80
 
 # install certbot
