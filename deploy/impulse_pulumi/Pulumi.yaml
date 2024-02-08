@@ -7,3 +7,4 @@ config:
   snapshot_id: 27dc3f45-dcaf-479c-85fc-8255f5f523a1
   region: atl
   plan: vhp-1c-1gb-amd
+  email_address: dek@substructure.one

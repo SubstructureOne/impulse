@@ -24,9 +24,10 @@ sudo systemctl enable kestrelsite --now
 sudo cp /home/ubuntu/nginx_default /etc/nginx/sites-available/default
 sudo systemctl restart nginx
 
-sudo snap install --classic certbot
-sudo ln -sf /snap/bin/certbot /usr/bin/certbot
-sudo certbot --nginx -d site.dev.kdeploy.com -m dek@substructure.one --agree-tos -n
-
 sudo ufw allow 80
 sudo ufw allow 443
+
+sudo snap install --classic certbot
+sudo ln -sf /snap/bin/certbot /usr/bin/certbot
+sudo certbot --nginx -d "${SITE_HOSTNAME}" -m "${EMAIL_ADDRESS}" --agree-tos -n
+

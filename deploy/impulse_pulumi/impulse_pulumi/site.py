@@ -24,7 +24,7 @@ class SiteInstance:
             snapshot_id=config.require("base_snapshot_id"),
             region=config.require("region"),
             plan=config.require("site_plan"),
-            label="kestrelsite",
+            label=f"kestrelsite ({pulumi.get_stack()})",
             vpc_ids=[network.vpc.id],
             firewall_group_id=network.public_firewall.id,
         )
@@ -37,7 +37,7 @@ class SiteInstance:
                 label="reserved kestrel site IPv4",
             ),
             pulumi.ResourceOptions(
-                protect=True,
+                protect=False,
             )
         )
         self.connection = pulumi_command.remote.ConnectionArgs(
@@ -114,6 +114,7 @@ STRIPE_FUND_ACCOUNT_PRICE_ID={8}
 STRIPE_FUND_ACCOUNT_SUCCESS_URL={9}
 STRIPE_FUND_ACCOUNT_CANCEL_URL={10}
 PGPASS_KEY_B64={11}
+NEXT_PUBLIC_BASE_URL=https://{12}
 EOT
             """,
             config.require("supabase_url"),
@@ -128,6 +129,7 @@ EOT
             config.require("stripe_fund_success_url"),
             config.require("stripe_fund_cancel_url"),
             self.pgpass_encryption_key.b64_std,
+            config.require("site_hostname"),
         )
         write_env = pulumi_command.remote.Command(
             "write_kestrelsite_env_file",
@@ -143,7 +145,7 @@ EOT
             "configure_site",
             pulumi_command.remote.CommandArgs(
                 connection=self.connection,
-                create="bash /home/ubuntu/deploy_website.sh",
+                create=f"""EMAIL_ADDRESS="{config.require("email_address")}" SITE_HOSTNAME="{config.require("site_hostname")}" bash /home/ubuntu/deploy_website.sh""",
                 triggers=[copy_setup, write_env_command],
             ),
             pulumi.ResourceOptions(

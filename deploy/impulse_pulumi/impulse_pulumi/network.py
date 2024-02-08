@@ -11,7 +11,7 @@ class KestrelNetwork:
             description="Kestrel VPC",
             region=config.require("region")
         )
-        self.top_domain = vultr.DnsDomain("kdeploy.com", domain="kdeploy.com")
+        # self.top_domain = vultr.DnsDomain("kdeploy.com", domain="kdeploy.com")
 
         # VPC rules
         self.private_firewall = vultr.FirewallGroup(
@@ -128,6 +128,7 @@ class KestrelNetwork:
                 notes=f"allow HTTP from public",
             )
         )
+
         def handle_public_ips(public_ips):
             for ind, public_ip in enumerate(public_ips):
                 if public_ip == "0.0.0.0":
@@ -166,7 +167,7 @@ class KestrelNetwork:
                         ip_type="v4",
                         subnet=public_ip,
                         subnet_size=subnet_size,
-                        port="5432",
+                        port=config.require("pgincoming_port"),
                         notes=f"allow PG fromm public {ind}",
                     )
                 )

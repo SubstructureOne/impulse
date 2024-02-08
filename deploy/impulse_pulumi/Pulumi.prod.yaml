@@ -1,0 +1,29 @@
+config:
+  impulse_pulumi:base_snapshot_id: 730ff49e-0a54-4b00-bc80-956cd993b5fc
+  impulse_pulumi:impulse_dnsname: impulse.prod
+  impulse_pulumi:impulse_domain: kdeploy.com
+  impulse_pulumi:impulse_hostname: impulse.prod.kdeploy.com
+  impulse_pulumi:impulse_pg_plan: vhp-1c-1gb-amd
+  impulse_pulumi:impulse_plan: vhp-1c-1gb-amd
+  impulse_pulumi:impulse_snapshot_id: d0fa7b52-c29a-4ddb-99ce-c36194bab838
+  impulse_pulumi:managed_pg_plan: vhp-1c-1gb-amd
+  impulse_pulumi:pgincoming_port: "7934"
+  impulse_pulumi:public_ips:
+    - 0.0.0.0
+  impulse_pulumi:region: ewr
+  impulse_pulumi:site_dnsname: site.prod
+  impulse_pulumi:site_domain: kdeploy.com
+  impulse_pulumi:site_hostname: site.prod.kdeploy.com
+  impulse_pulumi:site_plan: vhp-1c-1gb-amd
+  impulse_pulumi:stripe_fund_cancel_url: https://site.prod.kdeploy.com/profile
+  impulse_pulumi:stripe_fund_price_id:
+    secure: AAABAJIuL5U9al+Hf7Qi/lYsWp+0j9QvSgnR6DzZElKELYIdkzxLmBldLDgmkqatgbRddfX+EAwfx4PWWo4=
+  impulse_pulumi:stripe_fund_success_url: https://site.prod.kdeploy.com/confirm
+  impulse_pulumi:stripe_secret_key:
+    secure: AAABAHBhzp0xPkvSeoulsj3A6PED7V2HnH8CVrdP+DpVMIAg48KG8khg1ZJ6B72GWg+MZsQTiamHEPdkz4Y2aJH1EDa/8AlYCy/twglbKuJE6ZzKlM8VvgtvOphWprhi2KoZmXSeBEp3ZFduUPjWs2LIu+J4fiC97+oRTeR1Tgr+MahGCsEuSau3wQ==
+  impulse_pulumi:stripe_webhook_secret:
+    secure: AAABAG+1m6tiKoYp/1XTNyoY4JgI4p21rrjSu/ryaH2OLXZZqZ1IVPxHcJuZXRG4iaUK+Pwlkg3mgs+KJuaK7I72LkDT9A==
+  impulse_pulumi:supabase_anon_key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4Y2R6dGZvc3ZoZm5qb29kcGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NTY5ODU3OTQsImV4cCI6MTk3MjU2MTc5NH0.dCw3rZYphVhjYeARUhU65EOIJtNHJ2bx_fQ1Xe7Bzcg
+  impulse_pulumi:supabase_url: https://kxcdztfosvhfnjoodpfu.supabase.co
+  impulse_pulumi:trusted_ips:
+    - secure: AAABAH2lZ+SKPYYhfFX8qzMAEelWmZ4gTa95XaDEymI8V3N6Cj6feiWArS4+

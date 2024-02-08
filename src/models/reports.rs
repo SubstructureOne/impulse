@@ -17,6 +17,7 @@ pub enum PostgresqlPacketType {
     Startup,
     Query,
     SslRequest,
+    DataRow,
     Other
 }
 impl From<&prew::postgresql::PostgresqlPacketInfo> for PostgresqlPacketType {
@@ -26,8 +27,8 @@ impl From<&prew::postgresql::PostgresqlPacketInfo> for PostgresqlPacketType {
             prew::postgresql::PostgresqlPacketInfo::Startup(_) => PostgresqlPacketType::Startup,
             prew::postgresql::PostgresqlPacketInfo::Query(_) => PostgresqlPacketType::Query,
             prew::postgresql::PostgresqlPacketInfo::SslRequest => PostgresqlPacketType::SslRequest,
+            prew::postgresql::PostgresqlPacketInfo::DataRow(_) => PostgresqlPacketType::DataRow,
             prew::postgresql::PostgresqlPacketInfo::Other => PostgresqlPacketType::Other,
-
         }
     }
 }
@@ -45,6 +46,7 @@ impl FromStr for PostgresqlPacketType {
             "Startup" => Ok(PostgresqlPacketType::Startup),
             "Query" => Ok(PostgresqlPacketType::Query),
             "Other" => Ok(PostgresqlPacketType::Other),
+            "DataRow" => Ok(PostgresqlPacketType::DataRow),
             _ => Err(()),
         }
     }

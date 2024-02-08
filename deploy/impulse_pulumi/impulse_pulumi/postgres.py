@@ -22,7 +22,7 @@ class ManagedPgInstance:
                 snapshot_id=config.require("base_snapshot_id"),
                 region=config.require("region"),
                 plan=config.require("managed_pg_plan"),
-                label=config.require("managed_pg_instance_label"),
+                label=f"managed_pg ({pulumi.get_stack()})",
                 vpc_ids=[network.vpc.id],
                 firewall_group_id=network.private_firewall.id,
             ),
@@ -83,7 +83,7 @@ class ManagedPgInstance:
             "data_block_storage_1",
             vultr.BlockStorageArgs(
                 region=config.require("region"),
-                label="data_block_storage_1",
+                label=f"managed_data_block_1 ({pulumi.get_stack()})",
                 size_gb=40,
                 block_type="storage_opt",
                 live=True,
@@ -117,7 +117,7 @@ class ImpulsePgInstance:
             snapshot_id=config.require("base_snapshot_id"),
             region=config.require("region"),
             plan=config.require("impulse_pg_plan"),
-            label="impulse_pg",
+            label=f"impulse_pg ({pulumi.get_stack()})",
             vpc_ids=[network.vpc.id],
             firewall_group_id=network.private_firewall.id,
         )
@@ -136,6 +136,20 @@ class ImpulsePgInstance:
             host=self.instance.main_ip,
             user="root",
             private_key=Path(SSH_KEY_PATH).read_text(),
+        )
+        data_storage = vultr.BlockStorage(
+            "impulse_block",
+            vultr.BlockStorageArgs(
+                region=config.require("region"),
+                label=f"impulse_block ({pulumi.get_stack()})",
+                size_gb=40,
+                block_type="storage_opt",
+                live=True,
+                attached_to_instance=self.instance.id,
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
+            )
         )
         setpass = pulumi_command.remote.Command(
             "set_impulse_pg_password",

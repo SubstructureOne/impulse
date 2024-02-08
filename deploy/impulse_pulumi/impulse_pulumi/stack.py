@@ -18,19 +18,19 @@ class Stack:
         vultr.DnsRecord(
             "impulse_dns",
             vultr.DnsRecordArgs(
-                data=self.impulse.instance.main_ip,
-                domain=self.network.top_domain,
+                data=self.impulse.reserved_ip.subnet,
+                domain=config.require("impulse_domain"),
                 type="A",
-                name=f"impulse.{pulumi.get_stack()}",
+                name=config.require("impulse_dnsname"),
             )
         )
         vultr.DnsRecord(
             "kestrel_site_dns",
             vultr.DnsRecordArgs(
-                data=self.site.instance.main_ip,
-                domain=self.network.top_domain,
+                data=self.site.reserved_ip.subnet,
+                domain=config.require("site_domain"),
                 type="A",
-                name=f"site.{pulumi.get_stack()}",
+                name=config.require("site_dnsname"),
             )
         )
 
@@ -42,6 +42,8 @@ class Stack:
         pulumi.export("impulse_pg_privateip", self.impulse_pg.instance.internal_ip)
         pulumi.export("impulse_publicip", self.impulse.instance.main_ip)
         pulumi.export("impulse_privateip", self.impulse.instance.internal_ip)
+        pulumi.export("impulse_staticip", self.impulse.reserved_ip.subnet)
         pulumi.export("site_publicip", self.site.instance.main_ip)
         pulumi.export("site_privateip", self.site.instance.internal_ip)
+        pulumi.export("site_staticip", self.site.reserved_ip.subnet)
         pulumi.export("pgpass_key", self.site.pgpass_encryption_key)

@@ -1434,9 +1434,9 @@ dependencies = [
 
 [[package]]
 name = "prew"
-version = "0.1.8"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f28fdb9f658498f7f5c1a190ca51797baa9500f647fbba42da99b8663d48f529"
+checksum = "f21f42e7acff0eb8625f20411468797ae68e2bea7e8b6213e8dbd02a4b192118"
 dependencies = [
  "anyhow",
  "async-trait",

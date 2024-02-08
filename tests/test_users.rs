@@ -14,6 +14,7 @@ impl ExpectedEquals for User {
             && self.user_status == other.user_status
             && self.balance == other.balance
             && self.status_synced == other.status_synced
+            && self.pg_password_enc == other.pg_password_enc
     }
 }
 
@@ -39,6 +40,7 @@ pub fn create_user_test() -> Result<()> {
         status_synced: false,
         created_at: chrono::offset::Utc::now(),
         updated_at: chrono::offset::Utc::now(),
+        pg_password_enc: None,
     };
     assert!(new_user.expected_equals(&expected_user));
     let retrieved = User::retrieve(&mut conn, &user_id)?;

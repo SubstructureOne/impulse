@@ -6,10 +6,10 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use futures::lock::Mutex;
 use log::info;
-use prew::{PacketRules, RewriteReverseProxy, RuleSetProcessor};
+use prew::{NoTransform, PacketRules, RewriteReverseProxy, RuleSetProcessor};
 use serde::{Serialize, Deserialize};
 
-use impulse::prew::{AppendUserNameTransformer, ImpulseReporter};
+use impulse::prew::{AppendUserNameTransformer, ImpulseReporter, RemoveAppendedUserNameTransformer};
 
 
 #[derive(Debug, Parser)]
@@ -23,6 +23,8 @@ pub struct PrewArgs {
     report_connstr: Option<String>,
     #[arg(short, long)]
     config_file: Option<String>,
+    #[arg(long, default_value_t=false)]
+    enable_outgoing_transformer: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -57,6 +59,8 @@ pub async fn main() -> Result<()> {
     let parser = prew::PostgresParser::new();
     let filter = prew::NoFilter::new();
     let transformer = AppendUserNameTransformer::new();
+    let remover_xformer = RemoveAppendedUserNameTransformer::new();
+    let notransform = NoTransform::new();
     let encoder = prew::MessageEncoder::new();
     let reporter = ImpulseReporter::new();
     let report_connstr = args.report_connstr.or(env::var("DATABASE_URL").ok())
@@ -65,21 +69,40 @@ pub async fn main() -> Result<()> {
     let create_context = move || {
         impulse::prew::Context::new(report_connstr.clone()).unwrap()
     };
-    let prew_rules = RuleSetProcessor::new(
-        &parser,
-        &filter,
-        &transformer,
-        &encoder,
-        &reporter,
-        &create_context,
-    );
-    let processor = Arc::new(Mutex::new(prew_rules));
-    let mut proxy = RewriteReverseProxy::new();
-    let packet_rules = PacketRules {
-        bind_addr: args.bind_addr.context("Bind address not specified")?,
-        server_addr,
-        processor,
+    let packet_rules = if args.enable_outgoing_transformer {
+        let prew_rules = RuleSetProcessor::new(
+            &parser,
+            &filter,
+            &transformer,
+            &remover_xformer,
+            &encoder,
+            &reporter,
+            &create_context,
+        );
+        let processor = Arc::new(Mutex::new(prew_rules));
+        PacketRules  {
+            bind_addr: args.bind_addr.context("Bind address not specified")?,
+            server_addr,
+            processor,
+        }
+    } else {
+        let prew_rules = RuleSetProcessor::new(
+            &parser,
+            &filter,
+            &transformer,
+            &notransform,
+            &encoder,
+            &reporter,
+            &create_context,
+        );
+        let processor = Arc::new(Mutex::new(prew_rules));
+        PacketRules  {
+            bind_addr: args.bind_addr.context("Bind address not specified")?,
+            server_addr,
+            processor,
+        }
     };
+    let mut proxy = RewriteReverseProxy::new();
     proxy.add_proxy(Box::new(packet_rules)).await;
     info!("Starting proxy");
     proxy.run().await;
