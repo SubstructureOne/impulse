@@ -13,12 +13,12 @@ config:
   impulse_pulumi:region: ewr
   impulse_pulumi:site_dnsname: site.prod
   impulse_pulumi:site_domain: kdeploy.com
-  impulse_pulumi:site_hostname: site.prod.kdeploy.com
+  impulse_pulumi:site_hostname: site.prod.kdeploy.com,kestrelcode.com
   impulse_pulumi:site_plan: vhp-1c-1gb-amd
-  impulse_pulumi:stripe_fund_cancel_url: https://site.prod.kdeploy.com/profile
+  impulse_pulumi:stripe_fund_cancel_url: https://kestrelcode.com/profile
   impulse_pulumi:stripe_fund_price_id:
     secure: AAABAJIuL5U9al+Hf7Qi/lYsWp+0j9QvSgnR6DzZElKELYIdkzxLmBldLDgmkqatgbRddfX+EAwfx4PWWo4=
-  impulse_pulumi:stripe_fund_success_url: https://site.prod.kdeploy.com/confirm
+  impulse_pulumi:stripe_fund_success_url: https://kestrelcode.com/confirm
   impulse_pulumi:stripe_secret_key:
     secure: AAABAHBhzp0xPkvSeoulsj3A6PED7V2HnH8CVrdP+DpVMIAg48KG8khg1ZJ6B72GWg+MZsQTiamHEPdkz4Y2aJH1EDa/8AlYCy/twglbKuJE6ZzKlM8VvgtvOphWprhi2KoZmXSeBEp3ZFduUPjWs2LIu+J4fiC97+oRTeR1Tgr+MahGCsEuSau3wQ==
   impulse_pulumi:stripe_webhook_secret:
