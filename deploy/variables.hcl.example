@@ -1,5 +1,5 @@
-region = "us-east-1"
-postgres_password = "pw"
 vultr_api_key = ""
 vultr_plan_id = "vc2-1c-1gb"
 vultr_region = "ewr"
+vultr_ssh_key_id = ""
+ssh_key_file = ""
