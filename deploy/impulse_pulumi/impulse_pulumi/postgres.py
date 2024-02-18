@@ -97,7 +97,8 @@ class ManagedPgInstance:
             "restart_managed_postgresql",
             pulumi_command.remote.CommandArgs(
                 connection=self.connection,
-                create="""bash -c "ufw allow 5432 && systemctl restart postgresql" """
+                create="""bash -c "ufw allow 5432 && systemctl restart postgresql" """,
+                triggers=[postgresql_conf, pg_hba_conf],
             ),
             pulumi.ResourceOptions(
                 depends_on=[setpass, postgresql_conf, pg_hba_conf],
