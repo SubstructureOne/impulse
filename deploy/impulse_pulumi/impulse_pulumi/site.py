@@ -149,7 +149,7 @@ EOT
                 triggers=[copy_setup, write_env_command],
             ),
             pulumi.ResourceOptions(
-                depends_on=[copy_nginx, copy_setup, write_env, impulse_pg_inst.configured],
+                depends_on=[copy_nginx, copy_setup, write_env, self.reserved_ip, impulse_pg_inst.configured, network.public_firewall],
                 parent=self.instance,
             )
         )
