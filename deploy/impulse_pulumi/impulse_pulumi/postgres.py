@@ -74,9 +74,34 @@ class ManagedPgInstance:
                 connection=self.connection,
                 local_path="deploy_files/pg_hba.conf",
                 remote_path="/etc/postgresql/14/main/pg_hba.conf",
+                triggers=[os.path.getmtime("deploy_files/pg_hba.conf")],
             ),
             pulumi.ResourceOptions(
                 parent=self.instance
+            )
+        )
+        fluentd_config = pulumi_command.remote.CopyFile(
+            "managed_fluentd_conf",
+            pulumi_command.remote.CopyFileArgs(
+                connection=self.connection,
+                local_path="deploy_files/fluentd.conf",
+                remote_path="/etc/fluent/fluentd.conf",
+                triggers=[os.path.getmtime("deploy_files/fluentd.conf")],
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance
+            )
+        )
+        deploy_managed_pg_sh = pulumi_command.remote.CopyFile(
+            "deploy_managed_pg_sh",
+            pulumi_command.remote.CopyFileArgs(
+                connection=self.connection,
+                local_path="deploy_files/deploy_managed_pg.sh",
+                remote_path="/home/ubuntu/deploy_managed_pg.sh",
+                triggers=[os.path.getmtime("deploy_files/deploy_managed_pg.sh")],
+            ),
+            pulumi.ResourceOptions(
+                parent=self.instance,
             )
         )
         data_storage = vultr.BlockStorage(
@@ -93,17 +118,30 @@ class ManagedPgInstance:
                 parent=self.instance,
             )
         )
+        # pulumi_command.remote.Command(
+        #     "restart_managed_postgresql",
+        #     pulumi_command.remote.CommandArgs(
+        #         connection=self.connection,
+        #         create="""bash -c "ufw allow 5432 && systemctl restart postgresql" """,
+        #         triggers=[postgresql_conf, pg_hba_conf, fluentd_config],
+        #     ),
+        #     pulumi.ResourceOptions(
+        #         depends_on=[setpass, postgresql_conf, pg_hba_conf, fluentd_config],
+        #         parent=self.instance,
+        #     ),
+        # )
+        # FIXME: auto-manage setup of block storage
         pulumi_command.remote.Command(
-            "restart_managed_postgresql",
+            "deploy_managed_pg",
             pulumi_command.remote.CommandArgs(
                 connection=self.connection,
-                create="""bash -c "ufw allow 5432 && systemctl restart postgresql" """,
-                triggers=[postgresql_conf, pg_hba_conf],
+                create="""SETUP_BLOCK_STORAGE=0 bash /home/ubuntu/deploy_managed_pg.sh""",
+                triggers=[postgresql_conf, pg_hba_conf, fluentd_config, deploy_managed_pg_sh],
             ),
             pulumi.ResourceOptions(
-                depends_on=[setpass, postgresql_conf, pg_hba_conf],
+                depends_on=[postgresql_conf, pg_hba_conf, fluentd_config, deploy_managed_pg_sh],
                 parent=self.instance,
-            ),
+            )
         )
 
 

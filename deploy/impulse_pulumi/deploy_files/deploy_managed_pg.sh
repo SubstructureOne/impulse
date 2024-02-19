@@ -2,9 +2,10 @@
 
 set -euxo pipefail
 
+sudo ufw allow 5432
 # Explicitly gate the block storage setup for now to prevent accidental 
 # reconfiguration.
-if [[ -n ${SETUP_BLOCK_STORAGE} ]]; then
+if [[ ${SETUP_BLOCK_STORAGE} -eq 1 ]]; then
   # Setup the block storage device as storage area for the "userdata" tablespace.
   # postgresql_managed.conf already has "userdata" as the default tablespace.
   sudo parted -s /dev/vdb mklabel gpt
@@ -19,4 +20,5 @@ if [[ -n ${SETUP_BLOCK_STORAGE} ]]; then
   sudo -u postgres psql -c "CREATE TABLESPACE userdata LOCATION '/mnt/data/postgres'"
 fi
 
-  sudo fluent-gem install fluent-plugin-postgresql-csvlog --no-document
+sudo fluent-gem install fluent-plugin-postgresql-csvlog --no-document
+sudo systemctl restart postgresql fluentd
