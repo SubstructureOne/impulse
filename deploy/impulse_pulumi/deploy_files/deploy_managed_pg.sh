@@ -21,4 +21,6 @@ if [[ ${SETUP_BLOCK_STORAGE} -eq 1 ]]; then
 fi
 
 sudo fluent-gem install fluent-plugin-postgresql-csvlog --no-document
+sudo fluent-gem install fluent-plugin-sql --no-document
+sudo fluent-gem install pg --no-document
 sudo systemctl restart postgresql fluentd
