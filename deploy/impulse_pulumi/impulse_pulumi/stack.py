@@ -10,9 +10,11 @@ from .site import SiteInstance
 class Stack:
     def __init__(self, config: pulumi.Config):
         self.network = KestrelNetwork(config)
-        self.managed_pg = ManagedPgInstance(config, self.network)
         self.impulse_pg = ImpulsePgInstance(config, self.network)
-        self.impulse = ImpulseInstance(config, self.network, self.managed_pg, self.impulse_pg)
+        self.managed_pg = ManagedPgInstance(config, self.network, self.impulse_pg)
+        self.impulse = ImpulseInstance(
+            config, self.network, self.managed_pg, self.impulse_pg
+        )
         self.site = SiteInstance(config, self.network, self.managed_pg, self.impulse_pg)
 
         vultr.DnsRecord(
@@ -22,7 +24,7 @@ class Stack:
                 domain=config.require("impulse_domain"),
                 type="A",
                 name=config.require("impulse_dnsname"),
-            )
+            ),
         )
         vultr.DnsRecord(
             "kestrel_site_dns",
@@ -31,7 +33,7 @@ class Stack:
                 domain=config.require("site_domain"),
                 type="A",
                 name=config.require("site_dnsname"),
-            )
+            ),
         )
 
         pulumi.export("managed_pg_password", self.managed_pg.password.result)

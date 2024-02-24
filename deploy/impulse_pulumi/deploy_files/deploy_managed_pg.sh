@@ -23,4 +23,12 @@ fi
 sudo fluent-gem install fluent-plugin-postgresql-csvlog --no-document
 sudo fluent-gem install fluent-plugin-sql --no-document
 sudo fluent-gem install pg --no-document
+
+sudo sed --in-place "s/POSTGRES_HOST/${POSTGRES_HOST}/" /etc/fluent/fluentd.conf
+sudo sed --in-place "s/POSTGRES_PORT/${POSTGRES_PORT}/" /etc/fluent/fluentd.conf
+sudo sed --in-place "s/POSTGRES_DB/${POSTGRES_DB}/" /etc/fluent/fluentd.conf
+sudo sed --in-place "s/POSTGRES_USER/${POSTGRES_USER}/" /etc/fluent/fluentd.conf
+sudo sed --in-place "s/POSTGRES_PW/${POSTGRES_PW}/" /etc/fluent/fluentd.conf
+sudo sed --in-place "s/POSTGRES_TABLENAME/${POSTGRES_TABLENAME}/" /etc/fluent/fluentd.conf
+
 sudo systemctl restart postgresql fluentd
