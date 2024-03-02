@@ -38,8 +38,19 @@ build {
   sources = ["source.vultr.impulse"]
 
   provisioner "shell" {
+    inline = [
+      "mkdir -p /setup"
+    ]
+  }
+
+  provisioner "file" {
+    source = "./downloads/fluent-apt-source.deb"
+    destination = "/setup/"
+  }
+
+  provisioner "shell" {
     script = "./setup_base.sh"
     expect_disconnect = true
-    pause_after = "30s"
+    pause_after = "120s"
   }
 }
