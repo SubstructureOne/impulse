@@ -29,3 +29,7 @@ config:
   impulse_pulumi:site_dnsname: site.dev
   impulse_pulumi:impulse_hostname: impulse.dev.kdeploy.com
   impulse_pulumi:site_hostname: site.dev.kdeploy.com
+  impulse_pulumi:vke_plan: vc2-1c-2gb
+  impulse_pulumi:vke_min_nodes: 1
+  impulse_pulumi:vke_max_nodes: 2
+  impulse_pulumi:vke_k8s_version: v1.29.2+1
