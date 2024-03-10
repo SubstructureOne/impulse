@@ -19,11 +19,11 @@ class Stack:
         self.cluster = vultr.Kubernetes(
             "vke",
             vultr.KubernetesArgs(
-                label=f"vke ({pulumi.get_stack()})",
+                label=f"vke-{pulumi.get_stack()}",
                 version=config.require("vke_k8s_version"),
                 region=config.require("region"),
                 node_pools=vultr.KubernetesNodePoolsArgs(
-                    label=f"vk-nodepool ({pulumi.get_stack()})",
+                    label=f"vk-nodepool-{pulumi.get_stack()}",
                     auto_scaler=True,
                     min_nodes=config.require_int("vke_min_nodes"),
                     max_nodes=config.require_int("vke_max_nodes"),
