@@ -197,5 +197,13 @@ def handle_public_public_ips(parent, firewall_id, public_ips, config: pulumi.Con
         )
 
 
-def configure_public_firewall(firewall_id):
-    pass
+def configure_public_firewall(parent, firewall_id, config: pulumi.Config):
+    def handle_trusted_ips(trusted_ips):
+        handle_public_trusted_ips(parent, firewall_id, trusted_ips)
+
+    config.require_secret_object("trusted_ips").apply(handle_trusted_ips)
+
+    def handle_public_ips(public_ips):
+        handle_public_public_ips(parent, firewall_id, public_ips, config)
+
+    config.require_secret_object("public_ips").apply(handle_public_ips)

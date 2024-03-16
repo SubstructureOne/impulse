@@ -1,7 +1,7 @@
 import pulumi
 import ediri_vultr as vultr
 
-from .network import KestrelNetwork
+from .network import KestrelNetwork, configure_public_firewall
 from .impulse import ImpulseInstance
 from .postgres import ManagedPgInstance, ImpulsePgInstance
 from .site import SiteInstance
@@ -33,6 +33,7 @@ class Stack:
                 ),
             ),
         )
+        configure_public_firewall(self.cluster, self.cluster.firewall_group_id, config)
         # self.node_pool = vultr.KubernetesNodePools(
         #     "vke_np",
         #     vultr.KubernetesNodePoolsInitArgs(
