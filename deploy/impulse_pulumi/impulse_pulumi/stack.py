@@ -22,6 +22,7 @@ class Stack:
                 label=f"vke-{pulumi.get_stack()}",
                 version=config.require("vke_k8s_version"),
                 region=config.require("region"),
+                enable_firewall=True,
                 node_pools=vultr.KubernetesNodePoolsArgs(
                     label=f"vk-nodepool-{pulumi.get_stack()}",
                     auto_scaler=True,

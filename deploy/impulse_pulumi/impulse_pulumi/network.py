@@ -52,54 +52,8 @@ class KestrelNetwork:
         )
 
         def handle_trusted_ips(trusted_ips):
-            for ind, trusted_ip in enumerate(trusted_ips):
-                vultr.FirewallRule(
-                    f"pg_trusted_{ind}",
-                    vultr.FirewallRuleArgs(
-                        firewall_group_id=self.private_firewall.id,
-                        protocol="tcp",
-                        ip_type="v4",
-                        subnet=trusted_ip,
-                        subnet_size=32,
-                        port="5432",
-                        notes=f"allow trusted IP {ind} to connect to Postgres",
-                    ),
-                    pulumi.ResourceOptions(
-                        parent=self.private_firewall,
-                        delete_before_replace=True,
-                        aliases=[pulumi.Alias(parent=None)]
-                    ),
-                )
-                vultr.FirewallRule(
-                    f"ssh_trusted_{ind}",
-                    vultr.FirewallRuleArgs(
-                        firewall_group_id=self.private_firewall.id,
-                        protocol="tcp",
-                        ip_type="v4",
-                        subnet=trusted_ip,
-                        subnet_size=32,
-                        port="22",
-                        notes=f"allow SSH from trusted {ind}",
-                    ),
-                    pulumi.ResourceOptions(
-                        parent=self.private_firewall,
-                    ),
-                )
-                vultr.FirewallRule(
-                    f"ssh_public_trusted_{ind}",
-                    vultr.FirewallRuleArgs(
-                        firewall_group_id=self.public_firewall.id,
-                        protocol="tcp",
-                        ip_type="v4",
-                        subnet=trusted_ip,
-                        subnet_size=32,
-                        port="22",
-                        notes=f"allow SSH from trusted {ind}",
-                    ),
-                    pulumi.ResourceOptions(
-                        parent=self.public_firewall,
-                    ),
-                )
+            handle_private_trusted_ips(self.private_firewall, self.private_firewall.id, trusted_ips)
+            handle_public_trusted_ips(self.public_firewall, self.public_firewall.id, trusted_ips)
         config.require_secret_object("trusted_ips").apply(handle_trusted_ips)
 
         vultr.FirewallRule(
@@ -130,45 +84,118 @@ class KestrelNetwork:
         )
 
         def handle_public_ips(public_ips):
-            for ind, public_ip in enumerate(public_ips):
-                if public_ip == "0.0.0.0":
-                    subnet_size = 0
-                else:
-                    subnet_size = 32
-                # vultr.FirewallRule(
-                #     f"public_http_access_{ind}",
-                #     vultr.FirewallRuleArgs(
-                #         firewall_group_id=self.public_firewall.id,
-                #         protocol="tcp",
-                #         ip_type="v4",
-                #         subnet=public_ip,
-                #         subnet_size=subnet_size,
-                #         port="80",
-                #         notes=f"allow HTTP from public {ind}",
-                #     )
-                # )
-                vultr.FirewallRule(
-                    f"public_https_access_{ind}",
-                    vultr.FirewallRuleArgs(
-                        firewall_group_id=self.public_firewall.id,
-                        protocol="tcp",
-                        ip_type="v4",
-                        subnet=public_ip,
-                        subnet_size=subnet_size,
-                        port="443",
-                        notes=f"allow HTTP from public {ind}",
-                    )
-                )
-                vultr.FirewallRule(
-                    f"public_pg_access_{ind}",
-                    vultr.FirewallRuleArgs(
-                        firewall_group_id=self.public_firewall.id,
-                        protocol="tcp",
-                        ip_type="v4",
-                        subnet=public_ip,
-                        subnet_size=subnet_size,
-                        port=config.require("pgincoming_port"),
-                        notes=f"allow PG fromm public {ind}",
-                    )
-                )
+            handle_public_public_ips(self.public_firewall, self.public_firewall.id, public_ips, config)
         config.require_secret_object("public_ips").apply(handle_public_ips)
+
+
+def handle_private_trusted_ips(parent, firewall_id, trusted_ips):
+    for ind, trusted_ip in enumerate(trusted_ips):
+        vultr.FirewallRule(
+            f"pg_trusted_{ind}",
+            vultr.FirewallRuleArgs(
+                firewall_group_id=firewall_id,
+                protocol="tcp",
+                ip_type="v4",
+                subnet=trusted_ip,
+                subnet_size=32,
+                port="5432",
+                notes=f"allow trusted IP {ind} to connect to Postgres",
+            ),
+            pulumi.ResourceOptions(
+                parent=parent,
+                delete_before_replace=True,
+                aliases=[pulumi.Alias(parent=None)],
+            ),
+        )
+        vultr.FirewallRule(
+            f"ssh_trusted_{ind}",
+            vultr.FirewallRuleArgs(
+                firewall_group_id=firewall_id,
+                protocol="tcp",
+                ip_type="v4",
+                subnet=trusted_ip,
+                subnet_size=32,
+                port="22",
+                notes=f"allow SSH from trusted {ind}",
+            ),
+            pulumi.ResourceOptions(
+                parent=parent,
+                delete_before_replace=True,
+            ),
+        )
+
+
+def handle_public_trusted_ips(parent, firewall_id, trusted_ips):
+    for ind, trusted_ip in enumerate(trusted_ips):
+        vultr.FirewallRule(
+            f"ssh_public_trusted_{ind}",
+            vultr.FirewallRuleArgs(
+                firewall_group_id=firewall_id,
+                protocol="tcp",
+                ip_type="v4",
+                subnet=trusted_ip,
+                subnet_size=32,
+                port="22",
+                notes=f"allow SSH from trusted {ind}",
+            ),
+            pulumi.ResourceOptions(
+                parent=parent,
+                delete_before_replace=True,
+            ),
+        )
+
+
+def handle_public_public_ips(parent, firewall_id, public_ips, config: pulumi.Config):
+    for ind, public_ip in enumerate(public_ips):
+        if public_ip == "0.0.0.0":
+            subnet_size = 0
+        else:
+            subnet_size = 32
+        # vultr.FirewallRule(
+        #     f"public_http_access_{ind}",
+        #     vultr.FirewallRuleArgs(
+        #         firewall_group_id=self.public_firewall.id,
+        #         protocol="tcp",
+        #         ip_type="v4",
+        #         subnet=public_ip,
+        #         subnet_size=subnet_size,
+        #         port="80",
+        #         notes=f"allow HTTP from public {ind}",
+        #     )
+        # )
+        vultr.FirewallRule(
+            f"public_https_access_{ind}",
+            vultr.FirewallRuleArgs(
+                firewall_group_id=firewall_id,
+                protocol="tcp",
+                ip_type="v4",
+                subnet=public_ip,
+                subnet_size=subnet_size,
+                port="443",
+                notes=f"allow HTTP from public {ind}",
+            ),
+            pulumi.ResourceOptions(
+                parent=parent,
+                delete_before_replace=True,
+            ),
+        )
+        vultr.FirewallRule(
+            f"public_pg_access_{ind}",
+            vultr.FirewallRuleArgs(
+                firewall_group_id=firewall_id,
+                protocol="tcp",
+                ip_type="v4",
+                subnet=public_ip,
+                subnet_size=subnet_size,
+                port=config.require("pgincoming_port"),
+                notes=f"allow PG fromm public {ind}",
+            ),
+            pulumi.ResourceOptions(
+                parent=parent,
+                delete_before_replace=True,
+            ),
+        )
+
+
+def configure_public_firewall(firewall_id):
+    pass
