@@ -27,3 +27,8 @@ config:
   impulse_pulumi:supabase_url: https://kxcdztfosvhfnjoodpfu.supabase.co
   impulse_pulumi:trusted_ips:
     - secure: AAABAH2lZ+SKPYYhfFX8qzMAEelWmZ4gTa95XaDEymI8V3N6Cj6feiWArS4+
+    - secure: AAABAB1QyresD3wI37aiByp8gP/GCB2J11r2ZSkI3BbNiAKV/2YKLuO6LLFZwCw=
+  impulse_pulumi:vke_k8s_version: v1.29.2+1
+  impulse_pulumi:vke_max_nodes: "2"
+  impulse_pulumi:vke_min_nodes: "1"
+  impulse_pulumi:vke_plan: vc2-1c-2gb

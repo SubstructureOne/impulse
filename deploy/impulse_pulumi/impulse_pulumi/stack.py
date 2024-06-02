@@ -1,7 +1,7 @@
 import pulumi
 import ediri_vultr as vultr
 
-from .network import KestrelNetwork
+from .network import KestrelNetwork, configure_public_firewall
 from .impulse import ImpulseInstance
 from .postgres import ManagedPgInstance, ImpulsePgInstance
 from .site import SiteInstance
@@ -16,6 +16,36 @@ class Stack:
             config, self.network, self.managed_pg, self.impulse_pg
         )
         self.site = SiteInstance(config, self.network, self.managed_pg, self.impulse_pg)
+        self.cluster = vultr.Kubernetes(
+            "vke",
+            vultr.KubernetesArgs(
+                label=f"vke-{pulumi.get_stack()}",
+                version=config.require("vke_k8s_version"),
+                region=config.require("region"),
+                enable_firewall=True,
+                node_pools=vultr.KubernetesNodePoolsArgs(
+                    label=f"vk-nodepool-{pulumi.get_stack()}",
+                    auto_scaler=True,
+                    min_nodes=config.require_int("vke_min_nodes"),
+                    max_nodes=config.require_int("vke_max_nodes"),
+                    node_quantity=config.require_int("vke_min_nodes"),
+                    plan=config.require("vke_plan"),
+                ),
+            ),
+        )
+        configure_public_firewall(self.cluster, self.cluster.firewall_group_id, config)
+        # self.node_pool = vultr.KubernetesNodePools(
+        #     "vke_np",
+        #     vultr.KubernetesNodePoolsInitArgs(
+        #         cluster_id=self.cluster.id,
+        #         label=f"vk-nodepool ({pulumi.get_stack()})",
+        #         auto_scaler=True,
+        #         min_nodes=config.require_int("vke_min_nodes"),
+        #         max_nodes=config.require_int("vke_max_nodes"),
+        #         node_quantity=config.require_int("vke_min_nodes"),
+        #         plan=config.require("vke_plan"),
+        #     ),
+        # )
 
         vultr.DnsRecord(
             "impulse_dns",
