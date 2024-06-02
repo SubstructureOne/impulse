@@ -1,5 +1,8 @@
 config:
   impulse_pulumi:base_snapshot_id: 74d3aa8f-4986-411b-9969-53a238b698b1
+  impulse_pulumi:impulse_dnsname: impulse.dev
+  impulse_pulumi:impulse_domain: kdeploy.com
+  impulse_pulumi:impulse_hostname: impulse.dev.kdeploy.com
   impulse_pulumi:impulse_pg_plan: vhp-1c-1gb-amd
   impulse_pulumi:impulse_plan: vhp-1c-1gb-amd
   impulse_pulumi:impulse_snapshot_id: d0fa7b52-c29a-4ddb-99ce-c36194bab838
@@ -9,6 +12,9 @@ config:
     - secure: AAABADsB5Q/H6bzF5V02UhFn6edaJUX6YZDS5fd6BIRipQZK95kehqo8HY4=
     - secure: AAABADdJt/mrUinai4XQdf4D6yyD2EdiNwKVcoHDYk8pG9zqKqUqqfEETdy9
   impulse_pulumi:region: atl
+  impulse_pulumi:site_dnsname: site.dev
+  impulse_pulumi:site_domain: kdeploy.com
+  impulse_pulumi:site_hostname: site.dev.kdeploy.com
   impulse_pulumi:site_plan: vhp-1c-1gb-amd
   impulse_pulumi:stripe_fund_cancel_url: https://site.dev.kdeploy.com/profile
   impulse_pulumi:stripe_fund_price_id:
@@ -23,13 +29,8 @@ config:
   impulse_pulumi:trusted_ips:
     - secure: AAABAH/QvEmXSm0YQKThQAsxrkOwEVHr7ZhXApBbxUMRKFjLKaFGFv8OCdo=
     - secure: AAABAE6hE/rT7gSBta5w1JkUINOlw7vXHTA2OMLYMXSofNalShx9EKvgB1yO
-  impulse_pulumi:impulse_domain: kdeploy.com
-  impulse_pulumi:impulse_dnsname: impulse.dev
-  impulse_pulumi:site_domain: kdeploy.com
-  impulse_pulumi:site_dnsname: site.dev
-  impulse_pulumi:impulse_hostname: impulse.dev.kdeploy.com
-  impulse_pulumi:site_hostname: site.dev.kdeploy.com
-  impulse_pulumi:vke_plan: vc2-1c-2gb
-  impulse_pulumi:vke_min_nodes: 1
-  impulse_pulumi:vke_max_nodes: 2
+    - secure: AAABAN50DsgBFYF9F+VHktQmRVIpBOjdFbZ/3BJhO4mBi6w//jT2WyauIV25FfE=
   impulse_pulumi:vke_k8s_version: v1.29.2+1
+  impulse_pulumi:vke_max_nodes: "2"
+  impulse_pulumi:vke_min_nodes: "1"
+  impulse_pulumi:vke_plan: vc2-1c-2gb
