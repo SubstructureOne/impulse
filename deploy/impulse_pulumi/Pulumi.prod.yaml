@@ -1,5 +1,5 @@
 config:
-  impulse_pulumi:base_snapshot_id: 730ff49e-0a54-4b00-bc80-956cd993b5fc
+  impulse_pulumi:base_snapshot_id: 74d3aa8f-4986-411b-9969-53a238b698b1
   impulse_pulumi:impulse_dnsname: impulse.prod
   impulse_pulumi:impulse_domain: kdeploy.com
   impulse_pulumi:impulse_hostname: impulse.prod.kdeploy.com
