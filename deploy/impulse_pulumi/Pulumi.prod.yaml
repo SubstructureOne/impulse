@@ -13,7 +13,7 @@ config:
   impulse_pulumi:region: ewr
   impulse_pulumi:site_dnsname: site.prod
   impulse_pulumi:site_domain: kdeploy.com
-  impulse_pulumi:site_hostname: site.prod.kdeploy.com,kestrelcode.com,app.kestrelcode.com
+  impulse_pulumi:site_hostname: site.prod.kdeploy.com,app.kestrelcode.com
   impulse_pulumi:site_plan: vhp-1c-1gb-amd
   impulse_pulumi:stripe_fund_cancel_url: https://kestrelcode.com/profile
   impulse_pulumi:stripe_fund_price_id:
